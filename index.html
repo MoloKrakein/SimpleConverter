@@ -3,185 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Format Converter</title>
+    <title>FormatShift - The Ultimate Converter</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- JSZip for batch downloads -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://css.gg/css?=|spinner" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles to complement Tailwind */
-        body { font-family: 'Inter', sans-serif; }
-        #dropZone, #batchDropZone { border-style: dashed; transition: background-color 0.3s, border-color 0.3s; }
-        #dropZone.drag-over, #batchDropZone.drag-over { @apply bg-gray-700 border-blue-500; }
-        
-        /* New button-like tab styles */
-        .tab-btn { 
-            @apply flex items-center justify-center gap-2 px-4 py-2 font-semibold text-gray-300 bg-gray-600 rounded-md transition-all duration-200 hover:bg-gray-500 transform hover:scale-105;
-        }
-        .tab-btn.active { 
-            @apply bg-blue-600 text-white scale-105 shadow-lg;
+        body {
+            font-family: 'Inter', sans-serif;
         }
 
-        .tab-content, #previewArea > * { display: none; }
-        .tab-content.active, #previewArea > .active { display: block; }
-        #textPreview { max-height: 200px; overflow-y: auto; background-color: #1f2937; padding: 1rem; border-radius: 0.5rem; }
-        
-        #downloadList li, #batchFileList li { @apply flex justify-between items-center p-2 bg-gray-700 rounded-md; }
-        
-        .status-badge { @apply text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full; }
-        .gg-spinner {
-            transform: scale(var(--ggs,1)); box-sizing: border-box; position: relative; display: inline-block;
-            width: 20px; height: 20px; margin-left: 8px;
+        /* --- Tab Content Visibility --- */
+        .tab-content {
+            display: none;
         }
-        .gg-spinner::before {
-            content: ""; box-sizing: border-box; position: absolute; top: 50%; left: 50%;
-            width: 20px; height: 20px; margin-top: -10px; margin-left: -10px;
-            border-radius: 50%; border: 2px solid #ccc; border-top-color: #fff;
-            animation: spinner .6s linear infinite;
+        .tab-content.active {
+            display: block;
         }
-        @keyframes spinner { to { transform: rotate(360deg); } }
+
+        /* --- Neo-brutalist Dark Theme --- */
+        .hard-shadow {
+            box-shadow: 4px 4px 0px #2563eb; /* blue-600 */
+        }
+        .hard-shadow-sm {
+            box-shadow: 2px 2px 0px #2563eb; /* blue-600 */
+        }
+        .action-btn {
+            transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+        }
+        .action-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #1d4ed8; /* blue-700 */
+        }
+        .action-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #1e3a8a; /* blue-800 */
+        }
+        .btn-disabled {
+           transform: none !important;
+           box-shadow: 2px 2px 0px #475569 !important; /* slate-600 */
+           background-color: #334155 !important; /* slate-700 */
+           color: #64748b !important; /* slate-500 */
+           cursor: not-allowed;
+           border-color: #475569 !important;
+        }
+
+        /* --- Form Elements --- */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+        }
+
+        /* --- UI Components --- */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fff;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tab-btn { color: #94a3b8; } /* slate-400 */
+        .tab-btn:hover { background-color: #1e293b; } /* slate-800 */
+        .tab-btn.active { 
+            background-color: #0f172a; /* slate-900 */
+            border-color: #475569; /* slate-600 */
+            border-radius: 8px 8px 0 0;
+            color: #3b82f6; /* blue-500 */
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; } /* slate-800 */
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; } /* slate-600 */
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; } /* slate-500 */
+
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-900 text-slate-200 flex items-center justify-center min-h-screen p-4">
 
     <!-- Full-page Drag & Drop Overlay -->
-    <div id="fullPageDropZone" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex flex-col items-center justify-center pointer-events-none">
-        <svg class="w-16 h-16 mb-4 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
-        <p class="text-2xl font-bold text-white">Drop file(s) anywhere to upload</p>
+    <div id="fullPageDropZone" class="hidden fixed inset-0 bg-blue-500 bg-opacity-90 z-50 flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-white">
+        <i data-lucide="upload-cloud" class="w-24 h-24 mb-4 text-white animate-bounce"></i>
+        <p class="text-4xl font-black text-white">DROP FILES TO UPLOAD</p>
     </div>
 
-    <div id="mainContainer" class="w-full max-w-3xl mx-auto p-6 md:p-8 bg-gray-800 rounded-2xl shadow-2xl border border-gray-700">
+    <div id="mainContainer" class="w-full max-w-5xl mx-auto p-6 md:p-8 bg-slate-800 rounded-xl border-2 border-slate-600 hard-shadow">
         
-        <div class="text-center mb-6">
-            <h1 class="text-4xl font-bold text-white">Advanced Format Converter</h1>
-            <p class="text-gray-400 mt-2">Preview, convert, and download multiple files.</p>
-        </div>
+        <header class="text-center mb-2">
+            <h1 class="text-3xl md:text-3xl font-black tracking-tighter text-white">FormatShift</h1>
+            <p class="text-slate-400 mt-1 text-base font-small">The Ultimate File Conversion Tool</p>
+        </header>
 
         <!-- Tabs Navigation -->
-        <div class="mb-6 bg-gray-900/50 p-2 rounded-lg">
-            <nav class="flex justify-between items-center space-x-0" aria-label="Tabs">
-                <button id="imageTabBtn" class="tab-btn active flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                    <span>Image</span>
-                </button>
-                <button id="textTabBtn" class="tab-btn flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15m-15 4.5h15m-15 4.5h15" />
-                    </svg>
-                    <span>Text</span>
-                </button>
-                <button id="batchTabBtn" class="tab-btn flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <!-- Batch/Multiple Files Icon: Stack of files -->
-                        <rect x="3" y="7" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                        <rect x="7" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    </svg>
-                    <span>Batch Convert</span>
-                </button>
+        <div class="mb-8 border-b-2 border-slate-600">
+            <nav class="flex -mb-px" aria-label="Tabs">
+                <button id="imageTabBtn" class="tab-btn active font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="image" class="w-5 h-5 mr-2"></i>Image</button>
+                <button id="textTabBtn" class="tab-btn font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Text</button>
+                <button id="batchTabBtn" class="tab-btn font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="files" class="w-5 h-5 mr-2"></i>Batch</button>
             </nav>
         </div>
 
-        <div id="singleFileConverter" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Column: Upload & Controls -->
-            <div class="space-y-6">
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-300">1. Upload File</label>
-                    <div id="dropZone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600 rounded-lg cursor-pointer bg-gray-800/50 hover:bg-gray-700/50">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                            <svg class="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
-                            <p class="text-sm text-gray-400"><span class="font-semibold">Click, drag, or paste</span></p>
-                            <p id="fileName" class="text-xs text-gray-500 mt-1">No file selected</p>
+        <!-- Main Content Area -->
+        <div>
+            <!-- Single File Converter View -->
+            <div id="singleFileConverter" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <!-- Left Column: Upload & Controls -->
+                <div class="lg:col-span-2 space-y-6">
+                     <div class="bg-slate-900 p-6 rounded-xl border-2 border-slate-600">
+                        <label class="block mb-2 text-sm font-bold tracking-wider uppercase text-slate-400">1. Upload File</label>
+                        <div id="dropZone" class="flex flex-col items-center justify-center w-full h-48 p-6 border-2 border-dashed border-slate-500 rounded-lg cursor-pointer bg-slate-800 hover:bg-blue-900/50 transition-colors">
+                            <div class="text-center">
+                                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto text-slate-500"></i>
+                                <p class="mt-2 text-slate-300 font-semibold">Drag, drop, or <span class="text-blue-400">paste</span> an image</p>
+                                <p id="fileName" class="text-xs text-slate-500 mt-1 truncate">No file selected</p>
+                            </div>
+                            <input type="file" id="fileInput" class="hidden">
                         </div>
-                        <input type="file" id="fileInput" class="hidden">
                     </div>
-                </div>
 
-                <!-- Tab Content for single files -->
-                <div class="bg-gray-700/50 p-6 rounded-lg">
-                    <div id="textConverterTab" class="tab-content">
-                        <div class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div><label for="textFromFormat" class="block mb-2 text-sm font-medium text-gray-300">From</label><select id="textFromFormat" class="from-format bg-gray-700 border border-gray-600 text-white text-sm rounded-lg w-full p-2.5"><option value="auto" selected>Auto-detect</option><option value="txt">TXT</option><option value="csv">CSV</option><option value="json">JSON</option></select></div>
-                                <div><label for="textToFormat" class="block mb-2 text-sm font-medium text-gray-300">To</label><select id="textToFormat" class="to-format bg-gray-700 border border-gray-600 text-white text-sm rounded-lg w-full p-2.5"><option value="csv">CSV</option><option value="json">JSON</option><option value="txt">TXT</option></select></div>
+                    <!-- Tab Content for single files -->
+                    <div class="bg-slate-900 p-6 rounded-xl border-2 border-slate-600">
+                        <div id="textConverterTab" class="tab-content">
+                            <div class="space-y-4">
+                                <h3 class="font-black text-lg text-white mb-4 tracking-tighter">Text Options</h3>
+                                <div><label for="textFromFormat" class="block mb-2 text-sm font-bold text-slate-400">From</label><select id="textFromFormat" class="form-element from-format w-full p-3 bg-slate-800 border-2 border-slate-600 rounded-lg font-semibold hard-shadow-sm text-white"><option value="auto" selected>Auto-detect</option><option value="txt">TXT</option><option value="csv">CSV</option><option value="json">JSON</option></select></div>
+                                <div><label for="textToFormat" class="block mb-2 text-sm font-bold text-slate-400">To</label><select id="textToFormat" class="form-element to-format w-full p-3 bg-slate-800 border-2 border-slate-600 rounded-lg font-semibold hard-shadow-sm text-white"><option value="csv">CSV</option><option value="json">JSON</option><option value="txt">TXT</option></select></div>
+                                <button id="textConvertBtn" class="action-btn hard-shadow w-full font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 !mt-6 bg-blue-600 border-2 border-blue-800 text-white">Convert Text</button>
                             </div>
-                            <button id="textConvertBtn" class="action-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">Convert Text File</button>
                         </div>
-                    </div>
-                    <div id="imageConverterTab" class="tab-content active">
-                        <div class="space-y-6">
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div><label for="imageFromFormat" class="block mb-2 text-sm font-medium text-gray-300">From</label><select id="imageFromFormat" class="from-format bg-gray-700 border border-gray-600 text-white text-sm rounded-lg w-full p-2.5"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
-                                <div><label for="imageToFormat" class="block mb-2 text-sm font-medium text-gray-300">To</label><select id="imageToFormat" class="to-format bg-gray-700 border border-gray-600 text-white text-sm rounded-lg w-full p-2.5"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
-                            </div>
-                            <div class="flex flex-col gap-4"><button id="imageConvertBtn" class="action-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">Convert Image</button><button id="removeBgBtn" class="action-btn w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">Remove Background</button></div>
-                            
-                            <!-- Convert from URL section -->
-                            <div class="border-t border-gray-600 pt-6 mt-6">
-                                <p class="text-center text-sm text-gray-400 mb-4">OR Convert from URL</p>
+                        <div id="imageConverterTab" class="tab-content active">
+                             <div class="space-y-4">
+                                <h3 class="font-black text-lg text-white mb-4 tracking-tighter">Image Options</h3>
+                                <div><label for="imageFromFormat" class="block mb-2 text-sm font-bold text-slate-400">From</label><select id="imageFromFormat" class="form-element from-format w-full p-3 bg-slate-800 border-2 border-slate-600 rounded-lg font-semibold hard-shadow-sm text-white"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
+                                <div><label for="imageToFormat" class="block mb-2 text-sm font-bold text-slate-400">To</label><select id="imageToFormat" class="form-element to-format w-full p-3 bg-slate-800 border-2 border-slate-600 rounded-lg font-semibold hard-shadow-sm text-white"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
+                                <div class="flex flex-col gap-3 pt-2">
+                                    <button id="imageConvertBtn" class="action-btn hard-shadow bg-blue-600 border-2 border-blue-800 text-white">Convert Image</button>
+                                    <button id="removeBgBtn" class="action-btn hard-shadow bg-slate-200 text-slate-900 border-2 border-slate-400">Remove Background</button>
+                                </div>
+                                <div class="relative flex py-2 items-center"><div class="flex-grow border-t-2 border-slate-600"></div><span class="flex-shrink mx-4 text-slate-500 text-sm font-bold">OR</span><div class="flex-grow border-t-2 border-slate-600"></div></div>
                                 <div>
-                                    <label for="imageUrlInput" class="block mb-2 text-sm font-medium text-gray-300">Image URL</label>
-                                    <input type="url" id="imageUrlInput" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-lg w-full p-2.5" placeholder="https://example.com/image.png">
+                                    <label for="imageUrlInput" class="block mb-2 text-sm font-bold text-slate-400">Image URL</label>
+                                    <input type="url" id="imageUrlInput" class="w-full p-3 bg-slate-800 border-2 border-slate-600 rounded-lg font-semibold hard-shadow-sm text-white" placeholder="https://...">
                                 </div>
-                                <div class="mt-4">
-                                    <button id="convertUrlBtn" class="action-btn w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">Convert from URL</button>
-                                </div>
+                                <button id="convertUrlBtn" class="action-btn hard-shadow bg-slate-700 border-2 border-slate-600 text-white">Convert from URL</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Preview & Downloads -->
+                <div class="lg:col-span-3 space-y-6">
+                    <div class="bg-slate-900 p-6 rounded-xl border-2 border-slate-600 h-full flex flex-col">
+                        <label id="previewLabel" class="block mb-2 text-sm font-bold tracking-wider uppercase text-slate-400">2. Preview</label>
+                        <div id="previewArea" class="w-full h-48 flex items-center justify-center bg-slate-800 rounded-lg p-2 border-2 border-slate-600">
+                            <img id="imagePreview" class="hidden max-w-[90%] max-h-[90%] rounded object-contain" alt="Image Preview">
+                            <pre id="textPreview" class="hidden text-sm text-slate-200 w-full h-full overflow-auto p-2 bg-slate-900 font-mono"></pre>
+                            <div id="noPreview" class="text-center text-slate-500 active">
+                                <i data-lucide="eye" class="w-10 h-10 mx-auto"></i>
+                                <p class="mt-2 font-semibold">Preview Area</p>
+                            </div>
+                        </div>
+                        <label class="block mt-6 mb-2 text-sm font-bold tracking-wider uppercase text-slate-400">3. Download Queue</label>
+                        <div id="downloadArea" class="bg-slate-800 p-4 rounded-lg min-h-[220px] flex flex-col border-2 border-slate-600">
+                            <ul id="downloadList" class="space-y-2 mb-4 flex-grow"></ul>
+                            <div id="downloadListEmpty" class="flex-grow flex flex-col items-center justify-center text-slate-600 hidden">
+                                <i data-lucide="list-x" class="w-10 h-10"></i>
+                                <p class="mt-2 font-semibold">Queue is empty</p>
+                            </div>
+                            <div id="messageArea" class="text-center text-sm font-bold h-5 mb-2"></div>
+                            <div class="flex gap-4 pt-2">
+                                <button id="downloadAllBtn" class="action-btn hard-shadow bg-green-600 border-2 border-green-800 text-white" disabled>Download All (.zip)</button>
+                                <button id="clearListBtn" class="action-btn hard-shadow bg-red-600 border-2 border-red-800 text-white" disabled>Clear List</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Right Column: Preview & Downloads -->
-            <div id="singleFileOutputs" class="space-y-6">
-                <div><label class="block mb-2 text-sm font-medium text-gray-300">2. Preview</label><div id="previewArea" class="w-full h-40 flex items-center justify-center bg-gray-700/50 rounded-lg p-2"><img id="imagePreview" class="max-h-full max-w-full rounded" alt="Image Preview"><pre id="textPreview" class="text-xs text-gray-300 w-full"></pre><p id="noPreview" class="text-gray-500 active">Upload a file to see a preview</p></div></div>
-                <div><label class="block mb-2 text-sm font-medium text-gray-300">3. Download Files</label><div id="downloadArea" class="bg-gray-700/50 p-4 rounded-lg min-h-[150px]"><div id="messageArea" class="text-center text-gray-400 mb-2"></div><ul id="downloadList" class="space-y-2 mb-4"></ul><div class="flex gap-4"><button id="downloadAllBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed" disabled>Download All (.zip)</button><button id="clearListBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed" disabled>Clear List</button></div></div></div>
-            </div>
-        </div>
-        
-        <!-- Batch Converter Tab -->
-        <div id="batchConverterTab" class="tab-content mt-6">
-            <div class="space-y-6">
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-300">1. Upload Images (or a folder)</label>
-                    <div id="batchDropZone" class="flex flex-col items-center justify-center w-full min-h-[150px] border-2 border-gray-600 rounded-lg cursor-pointer bg-gray-800/50 hover:bg-gray-700/50">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                            <svg class="w-10 h-10 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
-                            <p class="mb-2 text-sm text-gray-400"><span class="font-semibold">Click to select files</span> or drag and drop</p>
-                            <p class="text-xs text-gray-500">Batch conversion is for images only</p>
+            
+            <!-- Batch Converter View -->
+            <div id="batchConverterTab" class="tab-content mt-6">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Batch Upload & Options -->
+                    <div class="space-y-6">
+                        <div class="bg-slate-900 p-6 rounded-xl border-2 border-slate-600">
+                            <label class="block mb-2 text-sm font-bold tracking-wider uppercase text-slate-400">1. Upload Images</label>
+                            <div id="batchDropZone" class="flex flex-col items-center justify-center w-full min-h-[150px] p-6 border-2 border-dashed border-slate-500 rounded-lg cursor-pointer bg-slate-800 hover:bg-blue-900/50 transition-colors">
+                                <div class="text-center">
+                                   <i data-lucide="folder-up" class="w-12 h-12 mx-auto text-slate-500"></i>
+                                   <p class="mt-2 text-slate-300 font-semibold">Drop a folder or <span class="text-blue-400">select files</span></p>
+                                   <p class="text-xs text-slate-500">Batch conversion is for images only</p>
+                                </div>
+                                <input type="file" id="batchFileInput" class="hidden" multiple accept="image/*">
+                            </div>
                         </div>
-                        <input type="file" id="batchFileInput" class="hidden" multiple accept="image/*">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="batchToFormat" class="block mb-2 text-sm font-medium text-gray-300">2. Convert all to</label>
-                        <select id="batchToFormat" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg w-full p-2.5">
-                            <option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-300">3. Start Process</label>
-                        <div class="flex gap-2">
-                            <button id="startBatchConvertBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-500" disabled>Start</button>
-                            <button id="clearBatchBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-500" disabled>Clear</button>
+                        <div class="bg-slate-900 p-6 rounded-xl border-2 border-slate-600">
+                            <label for="batchToFormat" class="block mb-2 text-sm font-bold tracking-wider uppercase text-slate-400">2. Convert all to</label>
+                            <select id="batchToFormat" class="w-full p-3 bg-slate-800 border-2 border-slate-600 rounded-lg font-semibold hard-shadow-sm text-white">
+                                <option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option>
+                            </select>
+                            <div class="flex gap-4 mt-4">
+                                <button id="startBatchConvertBtn" class="action-btn hard-shadow bg-blue-600 border-2 border-blue-800 text-white" disabled>Start Batch</button>
+                                <button id="clearBatchBtn" class="action-btn hard-shadow bg-slate-700 border-2 border-slate-600 text-white" disabled>Clear</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-300">4. Files & Progress</label>
-                    <ul id="batchFileList" class="space-y-2 max-h-60 overflow-y-auto bg-gray-900/50 p-3 rounded-lg">
-                       <li id="noBatchFiles" class="text-gray-500 text-center">No files uploaded yet.</li>
-                    </ul>
-                </div>
-                 <div id="batchDownloadArea" class="hidden text-center">
-                    <button id="batchDownloadBtn" class="w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Download All as .ZIP</button>
+                    <!-- Batch Progress -->
+                    <div class="bg-slate-900 p-6 rounded-xl border-2 border-slate-600 flex flex-col">
+                        <label class="block mb-2 text-sm font-bold tracking-wider uppercase text-slate-400">3. Files & Progress</label>
+                        <div class="bg-slate-800 p-3 rounded-lg border-2 border-slate-600 flex-grow max-h-96 overflow-y-auto">
+                            <ul id="batchFileList" class="space-y-2">
+                               <li id="noBatchFiles" class="text-slate-500 text-center font-semibold p-4">Upload files to begin</li>
+                            </ul>
+                        </div>
+                        <div id="batchDownloadArea" class="hidden text-center pt-4">
+                            <button id="batchDownloadBtn" class="action-btn hard-shadow bg-green-600 border-2 border-green-800 text-white inline-flex w-auto px-8">Download All as .ZIP</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -195,8 +252,9 @@
         const textConverterTab = document.getElementById('textConverterTab'), imageConverterTab = document.getElementById('imageConverterTab'), batchConverterTab = document.getElementById('batchConverterTab');
         const textConvertBtn = document.getElementById('textConvertBtn'), imageConvertBtn = document.getElementById('imageConvertBtn'), removeBgBtn = document.getElementById('removeBgBtn'), convertUrlBtn = document.getElementById('convertUrlBtn');
         const previewArea = document.getElementById('previewArea'), imagePreview = document.getElementById('imagePreview'), textPreview = document.getElementById('textPreview'), noPreview = document.getElementById('noPreview');
-        const downloadList = document.getElementById('downloadList'), downloadAllBtn = document.getElementById('downloadAllBtn'), clearListBtn = document.getElementById('clearListBtn');
+        const downloadList = document.getElementById('downloadList'), downloadAllBtn = document.getElementById('downloadAllBtn'), clearListBtn = document.getElementById('clearListBtn'), downloadListEmpty = document.getElementById('downloadListEmpty');
         const singleFileConverter = document.getElementById('singleFileConverter');
+        const previewLabel = document.getElementById('previewLabel');
         
         // Batch elements
         const batchDropZone = document.getElementById('batchDropZone'), batchFileInput = document.getElementById('batchFileInput');
@@ -245,9 +303,7 @@
 
         // --- Clipboard Paste Logic ---
         window.addEventListener('paste', (e) => {
-            if (document.activeElement === document.getElementById('imageUrlInput')) {
-                return;
-            }
+            if (document.activeElement === document.getElementById('imageUrlInput')) return;
             const items = e.clipboardData.items;
             let imageFile = null;
             for (let i = 0; i < items.length; i++) {
@@ -270,17 +326,23 @@
         function switchTab(tabName) {
             activeTab = tabName;
             const isBatch = tabName === 'batch';
-            textTabBtn.classList.toggle('active', tabName === 'text');
-            imageTabBtn.classList.toggle('active', tabName === 'image');
-            batchTabBtn.classList.toggle('active', isBatch);
+            const isText = tabName === 'text';
+
+            [textTabBtn, imageTabBtn, batchTabBtn].forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`${tabName}TabBtn`).classList.add('active');
             
-            textConverterTab.classList.toggle('active', tabName === 'text');
-            imageConverterTab.classList.toggle('active', tabName === 'image');
+            [textConverterTab, imageConverterTab].forEach(tab => tab.classList.remove('active'));
+            if (!isBatch) {
+                document.getElementById(`${tabName}ConverterTab`).classList.add('active');
+            }
             batchConverterTab.classList.toggle('active', isBatch);
             
             singleFileConverter.style.display = isBatch ? 'none' : 'grid';
-            document.getElementById('mainContainer').classList.toggle('max-w-3xl', !isBatch);
-            document.getElementById('mainContainer').classList.toggle('max-w-5xl', isBatch);
+            batchConverterTab.style.display = isBatch ? 'block' : 'none';
+
+            // Hide preview for text tab
+            previewLabel.style.display = isText ? 'none' : 'block';
+            previewArea.style.display = isText ? 'none' : 'flex';
         }
 
         function handleFile(file) {
@@ -289,23 +351,31 @@
             updatePreview(file);
             const fileExt = file.name.split('.').pop().toLowerCase();
             const textFormats = ['txt', 'csv', 'json'], imageFormats = ['png', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'];
-            if (textFormats.includes(fileExt)) { switchTab('text'); document.getElementById('textFromFormat').value = fileExt; } 
-            else if (imageFormats.includes(fileExt)) { switchTab('image'); document.getElementById('imageFromFormat').value = fileExt === 'jpg' ? 'jpeg' : fileExt; }
+            if (textFormats.includes(fileExt)) { 
+                switchTab('text'); 
+                document.getElementById('textFromFormat').value = fileExt; 
+            } 
+            else if (imageFormats.includes(fileExt)) { 
+                switchTab('image'); 
+                document.getElementById('imageFromFormat').value = fileExt === 'jpg' ? 'jpeg' : fileExt; 
+            }
         }
         
         function updatePreview(file) {
-            imagePreview.classList.remove('active'); textPreview.classList.remove('active'); noPreview.classList.remove('active');
+            [imagePreview, textPreview, noPreview].forEach(el => el.classList.add('hidden'));
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => { imagePreview.src = e.target.result; };
                 reader.readAsDataURL(file);
-                imagePreview.classList.add('active');
-            } else if (file.type.startsWith('text/') || file.type === 'application/json') {
+                imagePreview.classList.remove('hidden');
+            } else if ((file.type.startsWith('text/') || file.type === 'application/json') && activeTab !== 'text') {
                 const reader = new FileReader();
                 reader.onload = (e) => { textPreview.textContent = e.target.result; };
                 reader.readAsText(file);
-                textPreview.classList.add('active');
-            } else { noPreview.classList.add('active'); }
+                textPreview.classList.remove('hidden');
+            } else { 
+                noPreview.classList.remove('hidden'); 
+            }
         }
 
         async function handleConversion(action, event) {
@@ -333,34 +403,28 @@
             const toFormat = document.getElementById('imageToFormat').value;
             const buttonEl = event.target.closest('.action-btn');
 
-            if (!url) {
-                displayMessage('Please enter an image URL.', 'error');
-                return;
-            }
+            if (!url) { displayMessage('Please enter an image URL.', 'error'); return; }
 
             setLoading(buttonEl, true);
-            displayMessage('Fetching image from URL...', 'success');
+            displayMessage('Fetching image...', 'info');
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Server responded with status: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
                 const blob = await response.blob();
-                if (!blob.type.startsWith('image/')) {
-                    throw new Error('The fetched file is not a valid image. Please check the URL.');
-                }
+                if (!blob.type.startsWith('image/')) throw new Error('The fetched file is not a valid image.');
+                
                 const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0] || `image_from_url.${blob.type.split('/')[1]}`;
-                const fetchedFile = new File([blob], filename, { type: blob.type });
-                currentFile = fetchedFile;
+                currentFile = new File([blob], filename, { type: blob.type });
                 updatePreview(currentFile);
+                
                 const convertedData = await convertImage(currentFile, toFormat);
                 addFileToDownloadList(convertedData, toFormat);
-                displayMessage(`Image from URL converted and added to download list.`, 'success');
+                displayMessage(`URL image converted.`, 'success');
             } catch (error) {
                 console.error('URL Conversion Error:', error);
                 if (error instanceof TypeError) { 
-                    displayMessage(`Could not fetch image. This is likely due to the website's security policy (CORS). Please try a different image or download it and upload it directly.`, 'error');
+                    displayMessage(`CORS policy blocked fetch.`, 'error');
                 } else {
                     displayMessage(`Error: ${error.message}`, 'error');
                 }
@@ -379,18 +443,19 @@
                 convertedData = await convertImage(currentFile, to);
             }
             addFileToDownloadList(convertedData, to);
-            displayMessage(`File added to download list.`, 'success');
+            displayMessage(`File added to queue.`, 'success');
         }
         
         async function performBackgroundRemoval(fromFormat) {
             const imageFormats = ['png', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'];
             if (!imageFormats.includes(fromFormat)) throw new Error('Background removal only works for image files.');
+            displayMessage('Removing background...', 'info');
             const module = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.0/dist/browser.mjs");
             const removeBackground = module.default;
-            if (typeof removeBackground !== 'function') throw new Error('Background removal library did not load correctly.');
+            if (typeof removeBackground !== 'function') throw new Error('BG removal library failed.');
             const blob = await removeBackground(currentFile);
             addFileToDownloadList(blob, 'png', '_bg_removed');
-            displayMessage('Background removed. File added to list.', 'success');
+            displayMessage('Background removed.', 'success');
         }
 
         function addFileToDownloadList(data, extension, suffix = '_converted') {
@@ -405,30 +470,38 @@
 
         function renderDownloadList() {
             downloadList.innerHTML = '';
-            convertedFiles.forEach((file, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="flex items-center flex-grow truncate mr-4">
-                        <div class="w-10 h-10 flex items-center justify-center bg-gray-600 rounded-md mr-3 flex-shrink-0">
-                            ${file.blob.type.startsWith('image/') ? `<img src="${file.url}" class="w-full h-full object-cover rounded-md">` : `<svg class="w-6 h-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>`}
+            if (convertedFiles.length === 0) {
+                downloadListEmpty.classList.remove('hidden');
+            } else {
+                downloadListEmpty.classList.add('hidden');
+                convertedFiles.forEach((file, index) => {
+                    const li = document.createElement('li');
+                    li.className = "flex items-center p-2 bg-slate-900 rounded-lg border-2 border-slate-600";
+                    const icon = file.blob.type.startsWith('image/') ? 
+                        `<img src="${file.url}" class="w-full h-full object-cover rounded-md">` : 
+                        `<i data-lucide="file-text" class="w-6 h-6 text-slate-400"></i>`;
+                    
+                    li.innerHTML = `
+                        <div class="w-10 h-10 flex items-center justify-center bg-slate-800 rounded-md mr-3 flex-shrink-0 border-2 border-slate-600">
+                            ${icon}
                         </div>
-                        <span class="truncate text-gray-300">${file.name}</span>
-                    </div>
-                    <div class="flex items-center flex-shrink-0">
-                        <a href="${file.url}" download="${file.name}" class="p-2 text-blue-400 hover:text-blue-300">
-                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                        </a>
-                        <button data-index="${index}" class="remove-download-item p-2 text-red-400 hover:text-red-300">
-                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                        </button>
-                    </div>
-                `;
-                downloadList.appendChild(li);
-            });
-            downloadList.querySelectorAll('.remove-download-item').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    removeDownloadItem(parseInt(e.currentTarget.dataset.index));
+                        <span class="truncate text-slate-300 text-sm font-semibold flex-grow">${file.name}</span>
+                        <div class="flex items-center flex-shrink-0 ml-4">
+                            <a href="${file.url}" download="${file.name}" class="p-2 text-slate-400 hover:text-blue-400 transition-colors">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                            </a>
+                            <button data-index="${index}" class="remove-download-item p-2 text-slate-400 hover:text-red-400 transition-colors">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    `;
+                    downloadList.appendChild(li);
                 });
+            }
+            
+            lucide.createIcons();
+            downloadList.querySelectorAll('.remove-download-item').forEach(btn => {
+                btn.addEventListener('click', (e) => removeDownloadItem(parseInt(e.currentTarget.dataset.index)));
             });
             updateDownloadButtons();
         }
@@ -443,18 +516,21 @@
             const hasFiles = convertedFiles.length > 0;
             downloadAllBtn.disabled = convertedFiles.length < 2;
             clearListBtn.disabled = !hasFiles;
+            [downloadAllBtn, clearListBtn].forEach(btn => {
+                btn.classList.toggle('btn-disabled', btn.disabled);
+            });
         }
 
         function clearDownloadList() {
             convertedFiles.forEach(file => URL.revokeObjectURL(file.url));
             convertedFiles = [];
             renderDownloadList();
-            displayMessage('Download list cleared.', 'success');
+            displayMessage('Download queue cleared.', 'info');
         }
 
         async function downloadAllAsZip() {
             if (convertedFiles.length < 2) return;
-            displayMessage('Zipping files...', 'success');
+            displayMessage('Zipping files...', 'info');
             const zip = new JSZip();
             convertedFiles.forEach(file => zip.file(file.name, file.blob));
             const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -464,7 +540,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            displayMessage('ZIP file download started.', 'success');
+            displayMessage('ZIP download started.', 'success');
         }
         
         // --- Batch Conversion Logic ---
@@ -477,6 +553,7 @@
         function clearBatchList() {
             batchFiles = [];
             updateBatchFileList();
+            batchDownloadArea.classList.add('hidden');
         }
 
         function removeBatchItem(index) {
@@ -491,30 +568,29 @@
                 batchFiles.forEach((file, index) => {
                     const li = document.createElement('li');
                     li.id = `batch-file-${index}`;
+                    li.className = "flex items-center p-2 bg-slate-900 rounded-lg border-2 border-slate-600";
                     li.innerHTML = `
-                        <div class="flex items-center flex-grow truncate">
-                            <svg class="w-5 h-5 mr-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                            <span class="truncate">${file.name}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="status-badge bg-gray-600 text-gray-100">Pending</span>
-                            <button data-index="${index}" class="remove-batch-item p-1 text-gray-400 hover:text-white">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        <i data-lucide="image" class="w-5 h-5 mr-3 text-slate-400 flex-shrink-0"></i>
+                        <span class="truncate font-semibold text-sm text-slate-300">${file.name}</span>
+                        <div class="flex items-center ml-auto">
+                            <span class="status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">Pending</span>
+                            <button data-index="${index}" class="remove-batch-item p-1 text-slate-400 hover:text-red-400">
+                                <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
                     `;
                     batchFileList.appendChild(li);
                 });
+                lucide.createIcons();
                 batchFileList.querySelectorAll('.remove-batch-item').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        removeBatchItem(parseInt(e.currentTarget.dataset.index));
-                    });
+                    btn.addEventListener('click', (e) => removeBatchItem(parseInt(e.currentTarget.dataset.index)));
                 });
             } else {
                 noBatchFiles.style.display = 'block';
             }
             startBatchConvertBtn.disabled = batchFiles.length === 0;
             clearBatchBtn.disabled = batchFiles.length === 0;
+            [startBatchConvertBtn, clearBatchBtn].forEach(btn => btn.classList.toggle('btn-disabled', btn.disabled));
             batchDownloadArea.classList.add('hidden');
         }
 
@@ -532,17 +608,17 @@
                 const statusEl = li.querySelector('.status-badge');
                 li.querySelector('.remove-batch-item').style.display = 'none';
                 try {
-                    statusEl.className = 'status-badge bg-yellow-500 text-white';
+                    statusEl.className = 'status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-yellow-900/50 text-yellow-300';
                     statusEl.textContent = 'Converting...';
                     const convertedBlob = await convertImage(file, to);
                     const newFilename = `${file.name.split('.').slice(0, -1).join('.')}.${to}`;
                     zip.file(newFilename, convertedBlob);
-                    statusEl.className = 'status-badge bg-green-500 text-white';
+                    statusEl.className = 'status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-green-900/50 text-green-300';
                     statusEl.textContent = 'Done';
                     convertedCount++;
                 } catch (error) {
                     console.error(`Failed to convert ${file.name}:`, error);
-                    statusEl.className = 'status-badge bg-red-500 text-white';
+                    statusEl.className = 'status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-red-900/50 text-red-300';
                     statusEl.textContent = 'Error';
                 }
             });
@@ -567,22 +643,39 @@
         // --- Utility and Conversion Functions ---
         function setLoading(button, isLoading) {
             if (!button) return;
-            if (isLoading) { button.disabled = true; button.innerHTML += '<i class="gg-spinner"></i>';
-            } else { button.disabled = false; button.querySelector('.gg-spinner')?.remove(); }
+            const originalContent = button.getAttribute('data-original-content') || button.innerHTML;
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = '<div class="spinner"></div>';
+                if (!button.hasAttribute('data-original-content')) {
+                    button.setAttribute('data-original-content', originalContent);
+                }
+            } else {
+                button.disabled = false;
+                if (button.hasAttribute('data-original-content')) {
+                    button.innerHTML = button.getAttribute('data-original-content');
+                    button.removeAttribute('data-original-content');
+                }
+            }
         }
         function displayMessage(text, type) {
             messageArea.innerHTML = '';
             const p = document.createElement('p');
-p.textContent = text;
-            p.className = type === 'error' ? 'text-red-400' : 'text-green-400';
+            p.textContent = text;
+            const colors = {
+                error: 'text-red-400',
+                success: 'text-green-400',
+                info: 'text-blue-400'
+            };
+            p.className = `font-bold ${colors[type] || 'text-slate-400'}`;
             messageArea.appendChild(p);
         }
         function convertText(data, from, to) {
             if (from === 'csv' && to === 'json') return JSON.stringify(csvToJson(data), null, 4);
             if (from === 'json' && to === 'csv') return jsonToCsv(JSON.parse(data));
-            if (from === 'txt' && to === 'json') return JSON.stringify({ lines: data.trim().split('\n').map(l => l.trim()) }, null, 4);
-            if (from === 'txt' && to === 'csv') return data.trim().split('\n').map(line => line.trim().split(/\s+/).join(',')).join('\n');
-            if (from === 'json' && to === 'txt') return JSON.parse(data).lines.join('\n');
+            if (from === 'txt' && to === 'json') return JSON.stringify({ lines: data.trim().split('\\n').map(l => l.trim()) }, null, 4);
+            if (from === 'txt' && to === 'csv') return data.trim().split('\\n').map(line => line.trim().split(/\\s+/).join(',')).join('\\n');
+            if (from === 'json' && to === 'txt') return JSON.parse(data).lines.join('\\n');
             if (from === 'csv' && to === 'txt') return data.replace(/,/g, ' ');
             throw new Error(`Text conversion from ${from} to ${to} is not supported.`);
         }
@@ -609,7 +702,7 @@ p.textContent = text;
             });
         }
         function csvToJson(csv) {
-            const lines = csv.trim().split('\n'), headers = lines[0].split(',').map(h => h.trim()), result = [];
+            const lines = csv.trim().split('\\n'), headers = lines[0].split(',').map(h => h.trim()), result = [];
             for (let i = 1; i < lines.length; i++) {
                 const obj = {}, currentLine = lines[i].split(',');
                 for (let j = 0; j < headers.length; j++) obj[headers[j]] = currentLine[j] ? currentLine[j].trim() : '';
@@ -624,11 +717,14 @@ p.textContent = text;
                 const values = headers.map(header => `"${('' + row[header]).replace(/"/g, '""')}"`);
                 csvRows.push(values.join(','));
             }
-            return csvRows.join('\n');
+            return csvRows.join('\\n');
         }
 
         // Initial setup
+        lucide.createIcons();
         switchTab('image');
+        renderDownloadList();
+        updateBatchFileList(); // Also initialize batch list on load
     </script>
 </body>
 </html>

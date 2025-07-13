@@ -1,0 +1,190 @@
+/* ================================================================================
+  FORMATSHIFT STYLESHEET (Neo-Brutalist Persona Theme)
+================================================================================
+*/
+
+/* --------------------------------------------------
+  1. THEME & COLOR PALETTE (CSS VARIABLES)
+--------------------------------------------------
+  - Defines the color scheme for both light and dark modes.
+  - Inspired by the "Persona 3 Reload" UI palette.
+*/
+:root {
+    --bg-primary-light: #eef2f9;
+    --bg-secondary-light: #ffffff;
+    --text-primary-light: #020617;
+    --text-secondary-light: #334155;
+    --border-color-light: #020617;
+    --accent-primary-light: #2563eb;
+    --accent-secondary-light: #3b82f6;
+
+    --bg-primary-dark: #0d1117;
+    --bg-secondary-dark: #1e293b;
+    --text-primary-dark: #e2e8f0;
+    --text-secondary-dark: #94a3b8;
+    --border-color-dark: #475569;
+    --accent-primary-dark: #38bdf8;
+    --accent-secondary-dark: #7dd3fc;
+}
+
+.dark {
+    --bg-primary: var(--bg-primary-dark);
+    --bg-secondary: var(--bg-secondary-dark);
+    --text-primary: var(--text-primary-dark);
+    --text-secondary: var(--text-secondary-dark);
+    --border-color: var(--border-color-dark);
+    --accent-primary: var(--accent-primary-dark);
+    --accent-secondary: var(--accent-secondary-dark);
+}
+html:not(.dark) {
+    --bg-primary: var(--bg-primary-light);
+    --bg-secondary: var(--bg-secondary-light);
+    --text-primary: var(--text-primary-light);
+    --text-secondary: var(--text-secondary-light);
+    --border-color: var(--border-color-light);
+    --accent-primary: var(--accent-primary-light);
+    --accent-secondary: var(--accent-secondary-light);
+}
+
+/* --------------------------------------------------
+  2. BASE & LAYOUT STYLES
+--------------------------------------------------
+*/
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#mainContainer {
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+}
+
+/* --------------------------------------------------
+  3. NEO-BRUTALIST ELEMENTS
+--------------------------------------------------
+  - Defines the core "hard shadow" style for the theme.
+*/
+.hard-shadow {
+    box-shadow: 5px 5px 0px var(--border-color);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.hard-shadow-sm {
+    box-shadow: 3px 3px 0px var(--border-color);
+}
+.action-btn:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0px var(--border-color);
+}
+.action-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 3px 3px 0px var(--border-color);
+}
+
+/* --------------------------------------------------
+  4. COMPONENT STYLES
+--------------------------------------------------
+*/
+
+/* --- Tabs --- */
+.tab-btn {
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+.tab-btn:hover {
+    color: var(--accent-secondary);
+}
+.tab-btn.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+/* --- Buttons --- */
+.action-btn {
+    border: 2px solid var(--border-color);
+}
+.btn-primary {
+    background-color: var(--accent-primary);
+    color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-secondary);
+}
+.btn-secondary {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-secondary);
+}
+.btn-disabled {
+   background-color: var(--bg-primary) !important;
+   color: var(--text-secondary) !important;
+   cursor: not-allowed;
+   transform: none !important;
+   box-shadow: 3px 3px 0px var(--border-color) !important;
+}
+
+/* --- Forms & Inputs --- */
+.form-element {
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+}
+.form-element:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+select {
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+html:not(.dark) select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* --- Drop Zones --- */
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    background-color: var(--bg-primary);
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent-primary);
+    background-color: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-primary));
+}
+
+/* --- File Lists --- */
+.file-list-item {
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+}
+.file-list-item:hover {
+    border-color: var(--accent-secondary);
+}
+
+/* --------------------------------------------------
+  5. UTILITY & ANIMATION
+--------------------------------------------------
+*/
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.spinner {
+    width: 20px; height: 20px;
+    border: 3px solid;
+    border-color: var(--text-primary) transparent;
+    border-radius: 50%;
+    animation: spin-anim 1s linear infinite;
+}
+.btn-primary .spinner { border-color: var(--bg-secondary) transparent; }
+@keyframes spin-anim { to { transform: rotate(360deg); } }
