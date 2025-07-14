@@ -6,14 +6,18 @@
     <title>SimpleConvert - The Ultimate Converter</title>
     <link rel="icon" href="iconFormat.png" type="image/png">
 
+    <!-- Third-party libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- For Markdown Parsing -->
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-
         :root {
             --base-font-size: 14px;
         }
@@ -208,18 +212,40 @@
         .aero-btn.red:hover { background: linear-gradient(to bottom, #F9ABAB, #F05445); }
         .aero-btn.red:active { background: linear-gradient(to top, #F89B9B, #EA4335); }
 
-        /* --- Theme Toggle --- */
-        .theme-toggle {
-            position: absolute; top: 10px; right: 10px;
-            background: var(--widget-bg); border: 1px solid var(--panel-border);
-            border-radius: 20px; padding: 5px; cursor: pointer;
-            display: flex; align-items: center;
+        /* --- Header Buttons & Theme Toggle --- */
+        .header-top-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
         }
-        .theme-toggle i { color: var(--font-color-subheader); }
+        .header-icon-btn, .theme-toggle {
+            background: var(--widget-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 50%; /* Make them circular */
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--font-color-subheader);
+            transition: all 0.2s ease;
+        }
+        .header-icon-btn:hover, .theme-toggle:hover {
+            background-color: var(--interactive-bg);
+            color: var(--font-color-header);
+            transform: scale(1.1);
+        }
+        .theme-toggle {
+            position: static; /* Override old absolute positioning */
+        }
         .moon-icon { display: none; }
         .sun-icon { display: block; }
         body.dark-mode .moon-icon { display: block; }
         body.dark-mode .sun-icon { display: none; }
+
 
         /* --- Drop Zone --- */
         #dropZone, #batchDropZone {
@@ -258,8 +284,8 @@
         .file-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-actions a, .file-actions button { background: none; border: none; cursor: pointer; padding: 4px; }
         .file-actions i { color: var(--font-color-subheader); transition: color 0.2s; }
-        .file-actions a:hover i { color: var(--green-light); }
-        .file-actions button:hover i { color: var(--red-light); }
+        .file-actions a:hover i { color: #34A853; }
+        .file-actions button:hover i { color: #EA4335; }
         .status-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 10px; color: white; margin-left: auto; margin-right: 5px; }
         .status-badge.pending { background-color: #78909C; }
         .status-badge.converting { background-color: #FFB300; }
@@ -279,6 +305,89 @@
         .tool-group:last-child { margin-bottom: 0; }
         .tool-group label { display: block; margin-bottom: 5px; font-weight: 700; }
         .tool-flex-group { display: flex; gap: 10px; }
+
+        /* --- Info Modal --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            padding: 25px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--font-color-subheader);
+            padding: 5px;
+        }
+        .modal-close-btn:hover {
+            color: var(--font-color-header);
+        }
+        #readmeContent {
+            overflow-y: auto;
+            padding-right: 15px; /* for scrollbar */
+        }
+
+        /* README content styling */
+        #readmeContent h1 { font-size: 2em; color: var(--font-color-header); border-bottom: 1px solid var(--widget-header-border); padding-bottom: 0.3em; margin-bottom: 0.5em;}
+        #readmeContent h2 { font-size: 1.5em; color: var(--font-color-header); border-bottom: 1px solid var(--widget-header-border); padding-bottom: 0.3em; margin-bottom: 0.5em;}
+        #readmeContent h3 { font-size: 1.25em; color: var(--font-color-header); }
+        #readmeContent p { line-height: 1.6; margin-bottom: 1em; }
+        #readmeContent a { color: #3482E2; text-decoration: none; font-weight: bold; }
+        body.dark-mode #readmeContent a { color: #79BCF8; }
+        #readmeContent a:hover { text-decoration: underline; }
+        #readmeContent code {
+            background-color: var(--preview-bg);
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #readmeContent pre {
+            background-color: var(--preview-bg);
+            padding: 16px;
+            overflow: auto;
+            border-radius: 6px;
+            border: 1px solid var(--interactive-border);
+        }
+        #readmeContent pre code {
+            padding: 0; margin: 0; font-size: inherit; background: none;
+        }
+        #readmeContent ul, #readmeContent ol {
+            padding-left: 2em; margin-bottom: 1em;
+        }
+        #readmeContent li {
+            margin-bottom: 0.5em;
+        }
+        #readmeContent img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1em auto;
+            display: block;
+        }
 
         /* --- Utilities --- */
         .hidden { display: none !important; }
@@ -326,10 +435,18 @@
 
     <div class="container">
         <header>
-            <button id="themeToggleBtn" class="theme-toggle">
-                <i data-lucide="sun" class="sun-icon"></i>
-                <i data-lucide="moon" class="moon-icon"></i>
-            </button>
+            <div class="header-top-buttons">
+                <button id="infoBtn" class="header-icon-btn" title="Information">
+                    <i data-lucide="info"></i>
+                </button>
+                <a href="https://github.com/molokrakein/SimpleConverter" target="_blank" id="githubBtn" class="header-icon-btn" title="GitHub Repository">
+                    <i data-lucide="github"></i>
+                </a>
+                <button id="themeToggleBtn" class="theme-toggle">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+            </div>
             <h1>
                 <img src="iconFormat.png" alt="FormatShift Icon" style="width: 48px; height: 48px; margin-right: 12px;">
                 SimpleConvert
@@ -479,6 +596,7 @@
         </div>
     </div>
 
+    <!-- Tool Templates -->
     <template id="imageToolsTemplate">
         <button id="toggleImageToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="wand-2"></i>Image Tools</button>
         <div id="imageToolsContainer" class="tools-container hidden">
@@ -545,6 +663,19 @@
         </div>
     </template>
     
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn"><i data-lucide="x"></i></button>
+            <div id="readmeContent">
+                <!-- README content will be loaded here -->
+                <div class="spinner-container" style="display:flex; justify-content:center; padding: 40px;">
+                    <div class="spinner" style="width: 40px; height: 40px; border-color: var(--font-color-header) transparent;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="bg-credit">Photo by Vincent Botta on Unsplash</div>
 
     <script type="module">
@@ -566,6 +697,9 @@
         const toolsSection = document.getElementById('toolsSection');
         const urlInput = document.getElementById('urlInput'), urlBtn = document.getElementById('urlBtn');
         const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const infoBtn = document.getElementById('infoBtn');
+        const infoModal = document.getElementById('infoModal');
+        const readmeContent = document.getElementById('readmeContent');
         
         // Batch elements
         const batchDropZone = document.getElementById('batchDropZone'), batchFileInput = document.getElementById('batchFileInput');
@@ -615,6 +749,14 @@
         startBatchConvertBtn.addEventListener('click', startBatchConversion);
         clearBatchBtn.addEventListener('click', clearBatchList);
         batchDownloadBtn.addEventListener('click', downloadBatchZip);
+
+        // Modal listeners
+        infoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal || e.target.closest('.modal-close-btn')) {
+                infoModal.classList.add('hidden');
+            }
+        });
 
         // --- Theme ---
         function applyTheme(theme) {
@@ -1361,7 +1503,21 @@
             return csvRows.join('\\n');
         }
 
-        // Initial setup
+        // --- Load README for Modal ---
+        async function loadReadme() {
+            try {
+                const response = await fetch('README.md');
+                if (!response.ok) throw new Error('README.md not found');
+                const markdown = await response.text();
+                // Use the 'marked' library to parse markdown into HTML
+                readmeContent.innerHTML = marked.parse(markdown);
+            } catch (error) {
+                console.error('Error loading README:', error);
+                readmeContent.innerHTML = '<p style="color: red; text-align: center;">Could not load information.</p>';
+            }
+        }
+
+        // --- Initial setup ---
         const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark mode
         applyTheme(savedTheme);
         lucide.createIcons();
@@ -1369,6 +1525,7 @@
         updateBatchOptions();
         renderDownloadList();
         updateBatchFileList();
+        loadReadme(); // Fetch and render the README content for the modal
     </script>
 </body>
 </html>
