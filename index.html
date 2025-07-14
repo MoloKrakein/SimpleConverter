@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FormatShift - The Ultimate Converter</title>
-    <!-- We are not using Tailwind CSS anymore, all styles are custom -->
+    <title>SimpleConvert - The Ultimate Converter</title>
+    <link rel="icon" href="iconFormat.png" type="image/png">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
@@ -12,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Frutiger Aero Style by Gemini --- */
+
         :root {
             --base-font-size: 14px;
         }
@@ -331,9 +332,9 @@
             </button>
             <h1>
                 <img src="iconFormat.png" alt="FormatShift Icon" style="width: 48px; height: 48px; margin-right: 12px;">
-                SimpleConverter
+                SimpleConvert
             </h1>
-            <p>SimpleConverter</p>
+            <p>The Ultimate File Conversion Tool</p>
         </header>
 
         <nav class="tab-nav">
@@ -500,6 +501,10 @@
                     <button id="flipHorizontalBtn" class="aero-btn primary">Flip Horizontal</button>
                     <button id="flipVerticalBtn" class="aero-btn primary">Flip Vertical</button>
                 </div>
+            </div>
+            <div class="tool-group">
+                <label>Background</label>
+                <button id="removeBgBtn" class="aero-btn primary">Remove Background</button>
             </div>
             <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
             <button id="addPreviewToQueueBtn" class="aero-btn green">
@@ -717,6 +722,7 @@
                     document.getElementById('rotateBtn').addEventListener('click', (e) => handleImageTool('rotate', e));
                     document.getElementById('flipHorizontalBtn').addEventListener('click', (e) => handleImageTool('flipHorizontal', e));
                     document.getElementById('flipVerticalBtn').addEventListener('click', (e) => handleImageTool('flipVertical', e));
+                    document.getElementById('removeBgBtn').addEventListener('click', (e) => handleImageTool('removeBg', e));
                     document.getElementById('addPreviewToQueueBtn').addEventListener('click', addPreviewToQueue);
                 } else if (tabName === 'video') {
                      document.getElementById('toggleVideoToolsBtn').addEventListener('click', () => document.getElementById('videoToolsContainer').classList.toggle('hidden'));
@@ -834,6 +840,7 @@
             try {
                 let newBlob;
                 switch(tool) {
+                    case 'removeBg': newBlob = await performBackgroundRemoval(previewBlob); appliedTools.push('bg-removed'); break;
                     case 'resize': newBlob = await performResize(previewBlob); appliedTools.push('resized'); break;
                     case 'rotate': newBlob = await performRotation(previewBlob); appliedTools.push('rotated'); break;
                     case 'flipHorizontal': newBlob = await performFlip(previewBlob, 'horizontal'); appliedTools.push('flipped-h'); break;
@@ -968,6 +975,14 @@
             const convertedData = convertText(content, from, to);
             addFileToDownloadList(new Blob([convertedData], {type: 'text/plain'}), to, `_converted`);
             displayMessage(`File added to queue.`, 'success');
+        }
+
+        async function performBackgroundRemoval(sourceBlob) {
+            displayMessage('Removing background...', 'info');
+            const module = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.0/dist/browser.mjs");
+            const removeBackground = module.default;
+            if (typeof removeBackground !== 'function') throw new Error('BG removal library failed to load.');
+            return await removeBackground(sourceBlob);
         }
         
         function performResize(sourceBlob) {
