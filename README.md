@@ -1,7 +1,7 @@
 # SimpleConverter - The Ultimate File Converter
 
 <p align="center">
-  <img src="IconFormat.png" alt="SimpleConverter Logo" width="200">
+  <img src="iconFormat.png" alt="SimpleConverter Logo" width="200">
 </p>
 
 Tired of online converters that are slow, covered in ads, and make you jump through hoops just to download your own file? So were we.
