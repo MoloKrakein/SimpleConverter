@@ -59,3 +59,5 @@ SimpleConverter is different. It leverages the power of modern web technologies 
 
 *   Dark Mode Background Photo by [Vincent Botta on Unsplash](https://unsplash.com/photos/a-close-up-of-a-green-leaf-with-water-droplets-on-it-3_i2a01m2-M).
 *   Application icon and UI design inspired by the Frutiger Aero aesthetic.
+
+<h2>Thanks For Using My Project ! :)</h2>
