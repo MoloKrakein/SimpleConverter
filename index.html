@@ -4,285 +4,473 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FormatShift - The Ultimate Converter</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- JSZip for batch downloads -->
+    <!-- We are not using Tailwind CSS anymore, all styles are custom -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- FFmpeg.wasm for audio/video conversion -->
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        /* --- Frutiger Aero Style by Gemini --- */
+        :root {
+            --base-font-size: 14px;
         }
 
-        /* --- Tab Content Visibility --- */
-        .tab-content {
-            display: none;
+        /* --- Light Mode (Default Frutiger Aero) --- */
+        body:not(.dark-mode) {
+            --font-color: #0F294D;
+            --font-color-header: #00407A;
+            --font-color-subheader: #25588A;
+            --bg-color: #EAF2F5;
+            --panel-bg: rgba(255, 255, 255, 0.6);
+            --panel-border: #A4C2D3;
+            --widget-bg: rgba(255, 255, 255, 0.7);
+            --widget-header-border: #BBD6E5;
+            --interactive-bg: #F0F8FF;
+            --interactive-border: #A4C2D3;
+            --preview-bg: #E0F0FA;
+            --tab-bg: linear-gradient(to bottom, #F0F8FF, #D6EAF8);
+            --tab-hover-bg: linear-gradient(to bottom, #FFFFFF, #E0F0FA);
+            --tab-active-bg: linear-gradient(to bottom, #FFFFFF, #F0F8FF);
+            --tab-color: #3470A0;
+            --shadow-color: rgba(0, 0, 0, 0.15);
+            --bg-image: url('LightBG.jpg');
         }
-        .tab-content.active {
+
+        /* --- Dark Mode (Frutiger Aero Night) --- */
+        body.dark-mode {
+            --font-color: #D4E6F1;
+            --font-color-header: #A9D7F8;
+            --font-color-subheader: #88B4D8;
+            --bg-color: #0A192F;
+            --panel-bg: rgba(17, 34, 63, 0.6);
+            --panel-border: #2A4C6D;
+            --widget-bg: rgba(10, 25, 47, 0.75);
+            --widget-header-border: #2A4C6D;
+            --interactive-bg: #1C3A5E;
+            --interactive-border: #2A4C6D;
+            --preview-bg: #0A192F;
+            --tab-bg: linear-gradient(to bottom, #1C3A5E, #11223A);
+            --tab-hover-bg: linear-gradient(to bottom, #2A4C6D, #1C3A5E);
+            --tab-active-bg: linear-gradient(to bottom, #2A4C6D, #234263);
+            --tab-color: #A9D7F8;
+            --shadow-color: rgba(0, 0, 0, 0.35);
+            --bg-image: url('DarkBG.jpg');
+        }
+
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-attachment: fixed;
+            color: var(--font-color);
+            font-size: var(--base-font-size);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        /* --- Main Layout --- */
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--panel-border);
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--font-color-header);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        header p {
+            font-size: 16px;
+            color: var(--font-color-subheader);
+        }
+
+        .main-content { display: flex; gap: 20px; flex-wrap: wrap; }
+        .sidebar { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
+        .content-area { flex: 2; min-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* --- Widgets/Panels --- */
+        .widget {
+            background: var(--widget-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .widget h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--widget-header-border);
+            color: var(--font-color-header);
+        }
+
+        /* --- Tab Navigation --- */
+        .tab-nav { display: flex; gap: 5px; margin-bottom: 20px; }
+        .tab-btn {
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            gap: 8px; padding: 10px 15px; border-radius: 6px 6px 0 0;
+            border: 1px solid var(--panel-border); border-bottom: none; cursor: pointer;
+            background: var(--tab-bg); color: var(--tab-color);
+            font-weight: 700; transition: all 0.2s ease;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .tab-btn:hover { background: var(--tab-hover-bg); }
+        .tab-btn.active {
+            background: var(--tab-active-bg); color: var(--font-color);
+            position: relative; top: 1px;
+            border-color: var(--panel-border);
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+        body.dark-mode .tab-btn.active { color: #fff; }
+
+        /* --- Form Elements --- */
+        .form-element {
+            width: 100%; padding: 10px; border-radius: 6px;
+            border: 1px solid var(--interactive-border);
+            background-color: var(--interactive-bg);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            font-family: 'Tahoma', sans-serif; font-size: var(--base-font-size);
+            color: var(--font-color); box-sizing: border-box;
+        }
+        select.form-element {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%233470A0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.5rem center;
+            background-size: 1.2em; padding-right: 2.5rem;
+        }
+        body.dark-mode select.form-element {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23A9D7F8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 700; }
+        
+        /* --- Aero Button Style --- */
+        .aero-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 12px; border-radius: 6px;
+            font-weight: 700; font-size: 15px; color: white;
+            text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4);
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .aero-btn:active { box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .aero-btn:disabled {
+            border-color: #9DB2BF; background: linear-gradient(to bottom, #E0E8ED, #B8C6D1);
+            color: #7D8F9D; cursor: not-allowed; box-shadow: none; text-shadow: none;
+        }
+        body.dark-mode .aero-btn:disabled {
+            border-color: #486581; background: linear-gradient(to bottom, #334E68, #243B53); color: #627D98;
+        }
+
+        .aero-btn.primary { border: 1px solid #3482E2; background: linear-gradient(to bottom, #79BCF8, #3482E2); }
+        .aero-btn.primary:hover { background: linear-gradient(to bottom, #8ACFFF, #4593E8); }
+        .aero-btn.primary:active { background: linear-gradient(to top, #79BCF8, #3482E2); }
+
+        .aero-btn.green { border: 1px solid #34A853; background: linear-gradient(to bottom, #90E094, #34A853); }
+        .aero-btn.green:hover { background: linear-gradient(to bottom, #A0E8A4, #45B964); }
+        .aero-btn.green:active { background: linear-gradient(to top, #90E094, #34A853); }
+
+        .aero-btn.red { border: 1px solid #EA4335; background: linear-gradient(to bottom, #F89B9B, #EA4335); }
+        .aero-btn.red:hover { background: linear-gradient(to bottom, #F9ABAB, #F05445); }
+        .aero-btn.red:active { background: linear-gradient(to top, #F89B9B, #EA4335); }
+
+        /* --- Theme Toggle --- */
+        .theme-toggle {
+            position: absolute; top: 10px; right: 10px;
+            background: var(--widget-bg); border: 1px solid var(--panel-border);
+            border-radius: 20px; padding: 5px; cursor: pointer;
+            display: flex; align-items: center;
+        }
+        .theme-toggle i { color: var(--font-color-subheader); }
+        .moon-icon { display: none; }
+        .sun-icon { display: block; }
+        body.dark-mode .moon-icon { display: block; }
+        body.dark-mode .sun-icon { display: none; }
+
+        /* --- Drop Zone --- */
+        #dropZone, #batchDropZone {
+            border: 2px dashed var(--interactive-border); border-radius: 8px; padding: 20px;
+            text-align: center; background-color: rgba(200, 225, 240, 0.1);
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        #dropZone:hover, #batchDropZone:hover {
+            background-color: rgba(178, 216, 239, 0.2); border-color: #3482E2;
+        }
+        #dropZone p, #batchDropZone p { margin: 5px 0 0; }
+        #fileName, #batchFileCount { font-size: 12px; color: var(--font-color-subheader); }
+        .drop-icon { color: var(--font-color-subheader); }
+
+        /* --- Preview & Download Area --- */
+        #previewArea {
+            display: flex; align-items: center; justify-content: center; min-height: 200px;
+            background-color: var(--preview-bg); border-radius: 6px;
+            border: 1px solid var(--panel-border); padding: 10px; overflow: hidden;
+        }
+        #imagePreview, #videoPreview, #audioPreview, #textPreview { max-width: 100%; max-height: 250px; }
+        #noPreview { text-align: center; color: var(--font-color-subheader); }
+
+        #downloadArea, #batchProgressArea {
+            background-color: var(--preview-bg); border-radius: 6px;
+            border: 1px solid var(--panel-border); padding: 10px;
+            min-height: 150px; display: flex; flex-direction: column;
+        }
+        #downloadList, #batchFileList { list-style: none; padding: 0; margin: 0; flex-grow: 1; max-height: 200px; overflow-y: auto; }
+        #downloadList li, #batchFileList li {
+            display: flex; align-items: center; padding: 8px;
+            background-color: var(--interactive-bg); border-radius: 4px;
+            margin-bottom: 5px; border: 1px solid var(--interactive-border);
+        }
+        .file-icon { width: 24px; height: 24px; margin-right: 10px; color: #79BCF8; }
+        .file-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-actions a, .file-actions button { background: none; border: none; cursor: pointer; padding: 4px; }
+        .file-actions i { color: var(--font-color-subheader); transition: color 0.2s; }
+        .file-actions a:hover i { color: var(--green-light); }
+        .file-actions button:hover i { color: var(--red-light); }
+        .status-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 10px; color: white; margin-left: auto; margin-right: 5px; }
+        .status-badge.pending { background-color: #78909C; }
+        .status-badge.converting { background-color: #FFB300; }
+        .status-badge.done { background-color: #4CAF50; }
+        .status-badge.error { background-color: #F44336; }
+
+        .download-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        #messageArea { text-align: center; font-weight: bold; min-height: 20px; }
+        
+        /* --- Tools --- */
+        .tools-container {
+            background-color: rgba(224, 240, 250, 0.1);
+            border: 1px solid var(--interactive-border);
+            border-radius: 6px; padding: 15px; margin-top: 15px;
+        }
+        .tool-group { margin-bottom: 15px; }
+        .tool-group:last-child { margin-bottom: 0; }
+        .tool-group label { display: block; margin-bottom: 5px; font-weight: 700; }
+        .tool-flex-group { display: flex; gap: 10px; }
+
+        /* --- Utilities --- */
+        .hidden { display: none !important; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .spinner {
+            width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.5);
+            border-bottom-color: white; border-radius: 50%; display: inline-block;
+            box-sizing: border-box; animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #fullPageDropZone {
+            position: fixed; inset: 0; background-color: rgba(121, 188, 248, 0.9);
+            z-index: 50; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; pointer-events: none; border: 4px dashed white;
+        }
+        #fullPageDropZone p { font-size: 2.25rem; font-weight: 900; color: white; }
+
+        #bg-credit {
+            display: none;
+            position: fixed;
+            bottom: 5px;
+            right: 10px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+        body.dark-mode #bg-credit {
             display: block;
         }
 
-        /* --- Neo-brutalist Dark Theme --- */
-        .hard-shadow {
-            box-shadow: 4px 4px 0px #3b82f6; /* primary */
-        }
-        .hard-shadow-sm {
-            box-shadow: 2px 2px 0px #3b82f6; /* primary */
-        }
-        .action-btn {
-            transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-        }
-        .action-btn:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px #3b82f6; /* primary */
-        }
-        .action-btn:active {
-            transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0px #3b82f6; /* primary */
-        }
-        .btn-disabled {
-           transform: none !important;
-           box-shadow: 2px 2px 0px #475569 !important; /* slate-600 */
-           background-color: #334155 !important; /* slate-700 */
-           color: #64748b !important; /* slate-500 */
-           cursor: not-allowed;
-           border-color: #475569 !important;
-        }
-
-        /* --- Form Elements --- */
-        select, input[type="number"], input[type="text"], input[type="url"] {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-        select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1em;
-        }
-        input[type="number"] {
-             -moz-appearance: textfield;
-        }
-
-        /* --- UI Components --- */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid #3b82f6;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
-        }
-
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .tab-btn { color: #94a3b8; } /* text-slate-400 */
-        .tab-btn:hover { background-color: #1E293B; } /* bg-slate-800 */
-        .tab-btn.active { 
-            background-color: #0A0F1E; /* bg-darker */
-            border-color: #334155; /* border-slate-700 */
-            border-radius: 8px 8px 0 0;
-            color: #1e40af; /* secondary */
-        }
-
-        /* --- Scrollbar --- */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #10182B; } /* bg-medium */
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; } /* border-color */
-        ::-webkit-scrollbar-thumb:hover { background: #475569; } /* slate-600 */
-
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--preview-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--font-color-subheader); }
     </style>
 </head>
-<body class="bg-[#0A0F1E] text-[#E2E8F0] flex items-center justify-center min-h-screen p-4">
-
-    <!-- Full-page Drag & Drop Overlay -->
-    <div id="fullPageDropZone" class="hidden fixed inset-0 bg-[#1e40af] bg-opacity-90 z-50 flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-white">
-        <i data-lucide="upload-cloud" class="w-24 h-24 mb-4 text-white animate-bounce"></i>
-        <p class="text-4xl font-black text-white">DROP FILES TO UPLOAD</p>
+<body>
+    <div id="fullPageDropZone" class="hidden">
+        <i data-lucide="upload-cloud" style="width: 96px; height: 96px; margin-bottom: 1rem; color: white;"></i>
+        <p>DROP FILES TO UPLOAD</p>
     </div>
 
-    <div id="mainContainer" class="w-full max-w-5xl mx-auto p-6 md:p-8 bg-[#10182B] rounded-xl border-2 border-[#334155] hard-shadow">
-        
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-black tracking-tighter text-white">FormatShift</h1>
-            <p class="text-[#94A3B8] mt-2 text-base font-medium">The Ultimate File Conversion Tool</p>
+    <div class="container">
+        <header>
+            <button id="themeToggleBtn" class="theme-toggle">
+                <i data-lucide="sun" class="sun-icon"></i>
+                <i data-lucide="moon" class="moon-icon"></i>
+            </button>
+            <h1>
+                <img src="iconFormat.png" alt="FormatShift Icon" style="width: 48px; height: 48px; margin-right: 12px;">
+                FormatShift
+            </h1>
+            <p>The Ultimate File Conversion Tool</p>
         </header>
 
-        <!-- Tabs Navigation -->
-        <div class="mb-8 border-b-2 border-[#334155]">
-            <nav class="flex -mb-px" aria-label="Tabs">
-                <button id="imageTabBtn" class="tab-btn active font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="image" class="w-5 h-5 mr-2"></i>Image</button>
-                <button id="videoTabBtn" class="tab-btn font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="film" class="w-5 h-5 mr-2"></i>Video</button>
-                <button id="audioTabBtn" class="tab-btn font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="music" class="w-5 h-5 mr-2"></i>Audio</button>
-                <button id="textTabBtn" class="tab-btn font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Text</button>
-                <button id="batchTabBtn" class="tab-btn font-bold text-lg border-2 border-b-0 border-transparent -mb-px p-4"><i data-lucide="files" class="w-5 h-5 mr-2"></i>Batch</button>
-            </nav>
-        </div>
+        <nav class="tab-nav">
+            <button id="imageTabBtn" class="tab-btn active"><i data-lucide="image"></i>Image</button>
+            <button id="videoTabBtn" class="tab-btn"><i data-lucide="film"></i>Video</button>
+            <button id="audioTabBtn" class="tab-btn"><i data-lucide="music"></i>Audio</button>
+            <button id="textTabBtn" class="tab-btn"><i data-lucide="file-text"></i>Text</button>
+            <button id="batchTabBtn" class="tab-btn"><i data-lucide="files"></i>Batch</button>
+        </nav>
 
-        <!-- Main Content Area -->
-        <div>
-            <!-- Single File Converter View -->
-            <div id="singleFileConverter" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <!-- Left Column: Upload & Controls -->
-                <div class="lg:col-span-2 space-y-6">
-                     <div class="bg-[#0A0F1E] p-6 rounded-xl border-2 border-[#334155]">
-                        <label class="block mb-2 text-sm font-bold tracking-wider uppercase text-[#94A3B8]">1. Upload File</label>
-                        <div id="dropZone" class="flex flex-col items-center justify-center w-full h-48 p-6 border-2 border-dashed border-[#475569] rounded-lg cursor-pointer bg-[#10182B] hover:bg-[#1e40af]/20 transition-colors">
-                            <div class="text-center">
-                                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto text-[#64748B]"></i>
-                                <p class="mt-2 text-[#E2E8F0] font-semibold">Drag, drop, or <span class="text-[#1e40af] font-bold">paste</span> a file</p>
-                                <p id="fileName" class="text-xs text-[#64748B] mt-1 truncate">No file selected</p>
-                            </div>
+        <div id="singleFileConverter" class="active">
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="widget">
+                        <h2>1. Upload File</h2>
+                        <div id="dropZone">
+                            <i data-lucide="upload-cloud" class="drop-icon" style="width: 48px; height: 48px;"></i>
+                            <p>Drag, drop, or <span style="color: var(--blue-light); font-weight: bold;">paste</span> a file</p>
+                            <p id="fileName">No file selected</p>
                             <input type="file" id="fileInput" class="hidden">
                         </div>
                     </div>
 
-                    <!-- Tab Content for single files -->
-                    <div class="bg-[#0A0F1E] p-6 rounded-xl border-2 border-[#334155]">
-                        <div id="textConverterTab" class="tab-content">
-                            <div class="space-y-4">
-                                <h3 class="font-black text-lg text-white mb-4 tracking-tighter">Text Converter</h3>
-                                <div><label for="textFromFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">From</label><select id="textFromFormat" class="form-element from-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="auto" selected>Auto-detect</option><option value="txt">TXT</option><option value="csv">CSV</option><option value="json">JSON</option></select></div>
-                                <div><label for="textToFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">To</label><select id="textToFormat" class="form-element to-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="csv">CSV</option><option value="json">JSON</option><option value="txt">TXT</option></select></div>
-                                <button id="textConvertBtn" class="action-btn hard-shadow w-full font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 !mt-6 text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Convert Text</button>
-                                <div class="relative flex py-2 items-center"><div class="flex-grow border-t-2 border-[#334155]"></div><span class="flex-shrink mx-4 text-[#64748B] text-sm font-bold">OR</span><div class="flex-grow border-t-2 border-[#334155]"></div></div>
-                                <div>
-                                    <label for="textUrlInput" class="block mb-2 text-sm font-bold text-[#94A3B8]">Import from URL</label>
-                                    <input type="url" id="textUrlInput" class="w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white" placeholder="https://...">
-                                </div>
-                                <button id="textUrlBtn" class="action-btn hard-shadow bg-[#1E293B] border-2 border-[#334155] text-white">Import</button>
-                            </div>
+                     <div class="widget">
+                        <h2>Import from URL</h2>
+                        <div class="form-group">
+                            <input type="url" id="urlInput" class="form-element" placeholder="https://example.com/file.jpg">
                         </div>
+                        <button id="urlBtn" class="aero-btn primary">Import</button>
+                    </div>
+
+                    <div class="widget">
+                        <h2>2. Conversion Options</h2>
                         <div id="imageConverterTab" class="tab-content active">
-                             <div class="space-y-4">
-                                <h3 class="font-black text-lg text-white mb-4 tracking-tighter">Image Converter</h3>
-                                <div><label for="imageFromFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">From</label><select id="imageFromFormat" class="form-element from-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
-                                <div><label for="imageToFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">To</label><select id="imageToFormat" class="form-element to-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
-                                <button id="imageConvertBtn" class="action-btn hard-shadow text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Convert Image Format</button>
-                                <div class="relative flex py-2 items-center"><div class="flex-grow border-t-2 border-[#334155]"></div><span class="flex-shrink mx-4 text-[#64748B] text-sm font-bold">OR</span><div class="flex-grow border-t-2 border-[#334155]"></div></div>
-                                <div>
-                                    <label for="imageUrlInput" class="block mb-2 text-sm font-bold text-[#94A3B8]">Import from URL</label>
-                                    <input type="url" id="imageUrlInput" class="w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white" placeholder="https://...">
-                                </div>
-                                <button id="imageUrlBtn" class="action-btn hard-shadow bg-[#1E293B] border-2 border-[#334155] text-white">Import</button>
-                            </div>
+                            <div class="form-group"><label for="imageFromFormat">From</label><select id="imageFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
+                            <div class="form-group"><label for="imageToFormat">To</label><select id="imageToFormat" class="form-element to-format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
+                            <button id="imageConvertBtn" class="aero-btn green">Convert Image</button>
+                        </div>
+                        <div id="videoConverterTab" class="tab-content">
+                           <div class="form-group"><label for="videoFromFormat">From</label><select id="videoFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="avi">AVI</option><option value="mkv">MKV</option></select></div>
+                           <div class="form-group"><label for="videoToFormat">To</label><select id="videoToFormat" class="form-element to-format"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="avi">AVI</option><option value="mkv">MKV</option></select></div>
+                           <button id="videoConvertBtn" class="aero-btn green">Convert Video</button>
                         </div>
                         <div id="audioConverterTab" class="tab-content">
-                            <div class="space-y-4">
-                                <h3 class="font-black text-lg text-white mb-4 tracking-tighter">Audio Converter</h3>
-                                <div><label for="audioFromFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">From</label><select id="audioFromFormat" class="form-element from-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="auto" selected>Auto-detect</option><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="flac">FLAC</option></select></div>
-                                <div><label for="audioToFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">To</label><select id="audioToFormat" class="form-element to-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="flac">FLAC</option></select></div>
-                                <button id="audioConvertBtn" class="action-btn hard-shadow w-full font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 !mt-6 text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Convert Audio</button>
-                                <div class="relative flex py-2 items-center"><div class="flex-grow border-t-2 border-[#334155]"></div><span class="flex-shrink mx-4 text-[#64748B] text-sm font-bold">OR</span><div class="flex-grow border-t-2 border-[#334155]"></div></div>
-                                <div>
-                                    <label for="audioUrlInput" class="block mb-2 text-sm font-bold text-[#94A3B8]">Import from URL</label>
-                                    <input type="url" id="audioUrlInput" class="w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white" placeholder="https://...">
-                                </div>
-                                <button id="audioUrlBtn" class="action-btn hard-shadow bg-[#1E293B] border-2 border-[#334155] text-white">Import</button>
-                            </div>
+                            <div class="form-group"><label for="audioFromFormat">From</label><select id="audioFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="flac">FLAC</option></select></div>
+                            <div class="form-group"><label for="audioToFormat">To</label><select id="audioToFormat" class="form-element to-format"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="flac">FLAC</option></select></div>
+                            <button id="audioConvertBtn" class="aero-btn green">Convert Audio</button>
                         </div>
-                         <div id="videoConverterTab" class="tab-content">
-                            <div class="space-y-4">
-                                <h3 class="font-black text-lg text-white mb-4 tracking-tighter">Video Converter</h3>
-                                <div><label for="videoFromFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">From</label><select id="videoFromFormat" class="form-element from-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="auto" selected>Auto-detect</option><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="avi">AVI</option><option value="mkv">MKV</option></select></div>
-                                <div><label for="videoToFormat" class="block mb-2 text-sm font-bold text-[#94A3B8]">To</label><select id="videoToFormat" class="form-element to-format w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="avi">AVI</option><option value="mkv">MKV</option></select></div>
-                                <button id="videoConvertBtn" class="action-btn hard-shadow w-full font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 !mt-6 text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Convert Video</button>
-                                <div class="relative flex py-2 items-center"><div class="flex-grow border-t-2 border-[#334155]"></div><span class="flex-shrink mx-4 text-[#64748B] text-sm font-bold">OR</span><div class="flex-grow border-t-2 border-[#334155]"></div></div>
-                                <div>
-                                    <label for="videoUrlInput" class="block mb-2 text-sm font-bold text-[#94A3B8]">Import from URL</label>
-                                    <input type="url" id="videoUrlInput" class="w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white" placeholder="https://...">
-                                </div>
-                                <button id="videoUrlBtn" class="action-btn hard-shadow bg-[#1E293B] border-2 border-[#334155] text-white">Import</button>
-                            </div>
+                        <div id="textConverterTab" class="tab-content">
+                           <div class="form-group"><label for="textFromFormat">From</label><select id="textFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="txt">TXT</option><option value="csv">CSV</option><option value="json">JSON</option></select></div>
+                           <div class="form-group"><label for="textToFormat">To</label><select id="textToFormat" class="form-element to-format"><option value="csv">CSV</option><option value="json">JSON</option><option value="txt">TXT</option></select></div>
+                           <button id="textConvertBtn" class="aero-btn green">Convert Text</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Column: Preview & Downloads -->
-                <div class="lg:col-span-3 space-y-6">
-                    <div class="bg-[#0A0F1E] p-6 rounded-xl border-2 border-[#334155] h-full flex flex-col">
-                        <label id="previewLabel" class="block mb-2 text-sm font-bold tracking-wider uppercase text-[#94A3B8]">2. Preview</label>
-                        <div id="previewArea" class="w-full h-48 flex items-center justify-center bg-[#10182B] rounded-lg p-2 border-2 border-[#334155]">
-                            <img id="imagePreview" class="hidden max-w-[50%] max-h-[50%] rounded object-contain" alt="Image Preview">
-                            <video id="videoPreview" class="hidden w-full h-full rounded" controls></video>
-                            <audio id="audioPreview" class="hidden w-full" controls></audio>
-                            <pre id="textPreview" class="hidden text-sm text-[#E2E8F0] w-full h-full overflow-auto p-2 bg-[#0A0F1E] font-mono"></pre>
-                            <div id="noPreview" class="text-center text-[#64748B] active">
-                                <i data-lucide="eye" class="w-10 h-10 mx-auto"></i>
-                                <p class="mt-2 font-semibold">Preview Area</p>
+                <div class="content-area">
+                    <div class="widget">
+                        <h2>3. Preview & Tools</h2>
+                        <div id="previewArea">
+                            <img id="imagePreview" class="hidden" alt="Image Preview">
+                            <video id="videoPreview" class="hidden" controls></video>
+                            <audio id="audioPreview" class="hidden" controls></audio>
+                            <pre id="textPreview" class="hidden"></pre>
+                            <div id="noPreview">
+                                <i data-lucide="eye" style="width: 40px; height: 40px;"></i>
+                                <p>Preview Area</p>
                             </div>
                         </div>
-
-                        <!-- Dynamic Tools Section -->
-                        <div id="toolsSection" class="mt-4"></div>
-
-                        <label class="block mt-6 mb-2 text-sm font-bold tracking-wider uppercase text-[#94A3B8]">3. Download Queue</label>
-                        <div id="downloadArea" class="bg-[#10182B] p-4 rounded-lg min-h-[150px] flex flex-col border-2 border-[#334155]">
-                            <ul id="downloadList" class="space-y-2 mb-4 flex-grow"></ul>
-                            <div id="downloadListEmpty" class="flex-grow flex flex-col items-center justify-center text-[#475569] hidden">
-                                <i data-lucide="list-x" class="w-10 h-10"></i>
-                                <p class="mt-2 font-semibold">Queue is empty</p>
+                        <div id="toolsSection"></div>
+                    </div>
+                    <div class="widget">
+                        <h2>4. Download Queue</h2>
+                        <div id="downloadArea">
+                            <ul id="downloadList"></ul>
+                             <div id="downloadListEmpty" class="hidden" style="display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--font-color-subheader); flex-grow: 1;">
+                                <i data-lucide="list-x" style="width: 40px; height: 40px;"></i>
+                                <p>Queue is empty</p>
                             </div>
-                            <div id="messageArea" class="text-center text-sm font-bold h-5 mb-2"></div>
-                            <div class="flex gap-4 pt-2">
-                                <button id="downloadAllBtn" class="action-btn hard-shadow bg-green-600 border-2 border-green-800 text-white" disabled>Download All (.zip)</button>
-                                <button id="clearListBtn" class="action-btn hard-shadow bg-red-600 border-2 border-red-800 text-white" disabled>Clear List</button>
-                            </div>
+                        </div>
+                         <div id="messageArea"></div>
+                        <div class="download-buttons">
+                            <button id="downloadAllBtn" class="aero-btn green" disabled>Download All (.zip)</button>
+                            <button id="clearListBtn" class="aero-btn red" disabled>Clear List</button>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Batch Converter View -->
-            <div id="batchConverterTab" class="tab-content mt-6">
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Batch Upload & Options -->
-                    <div class="space-y-6">
-                        <div class="bg-[#0A0F1E] p-6 rounded-xl border-2 border-[#334155]">
-                            <label class="block mb-2 text-sm font-bold tracking-wider uppercase text-[#94A3B8]">1. Upload Images</label>
-                            <div id="batchDropZone" class="flex flex-col items-center justify-center w-full min-h-[150px] p-6 border-2 border-dashed border-[#475569] rounded-lg cursor-pointer bg-[#10182B] hover:bg-[#1e40af]/20 transition-colors">
-                                <div class="text-center">
-                                   <i data-lucide="folder-up" class="w-12 h-12 mx-auto text-[#64748B]"></i>
-                                   <p class="mt-2 text-[#E2E8F0] font-semibold">Drop a folder or <span class="text-[#1e40af] font-bold">select files</span></p>
-                                   <p class="text-xs text-[#64748B]">Batch conversion is for images only</p>
-                                </div>
-                                <input type="file" id="batchFileInput" class="hidden" multiple accept="image/*">
-                            </div>
-                        </div>
-                        <div class="bg-[#0A0F1E] p-6 rounded-xl border-2 border-[#334155]">
-                            <label for="batchToFormat" class="block mb-2 text-sm font-bold tracking-wider uppercase text-[#94A3B8]">2. Convert all to</label>
-                            <select id="batchToFormat" class="w-full p-3 bg-[#10182B] border-2 border-[#334155] rounded-lg font-semibold hard-shadow-sm text-white">
-                                <option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option>
+        </div>
+        
+        <div id="batchConverterTab" class="tab-content">
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="widget">
+                        <h2>1. Select Category</h2>
+                        <div class="form-group">
+                            <select id="batchCategory" class="form-element">
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                                <option value="audio">Audio</option>
+                                <option value="text">Text</option>
                             </select>
-                            <div class="flex gap-4 mt-4">
-                                <button id="startBatchConvertBtn" class="action-btn hard-shadow text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;" disabled>Start Batch</button>
-                                <button id="clearBatchBtn" class="action-btn hard-shadow bg-[#1E293B] border-2 border-[#334155] text-white" disabled>Clear</button>
-                            </div>
                         </div>
                     </div>
-                    <!-- Batch Progress -->
-                    <div class="bg-[#0A0F1E] p-6 rounded-xl border-2 border-[#334155] flex flex-col">
-                        <label class="block mb-2 text-sm font-bold tracking-wider uppercase text-[#94A3B8]">3. Files & Progress</label>
-                        <div class="bg-[#10182B] p-3 rounded-lg border-2 border-[#334155] flex-grow max-h-96 overflow-y-auto">
-                            <ul id="batchFileList" class="space-y-2">
-                               <li id="noBatchFiles" class="text-[#64748B] text-center font-semibold p-4">Upload files to begin</li>
-                            </ul>
+                    <div class="widget">
+                        <h2>2. Upload Files</h2>
+                        <div id="batchDropZone">
+                            <i data-lucide="folder-up" class="drop-icon" style="width: 48px; height: 48px;"></i>
+                            <p>Drop a folder or <span style="color: var(--blue-light); font-weight: bold;">select files</span></p>
+                            <p id="batchFileCount">0 files selected</p>
+                            <input type="file" id="batchFileInput" class="hidden" multiple>
                         </div>
-                        <div id="batchDownloadArea" class="hidden text-center pt-4">
-                            <button id="batchDownloadBtn" class="action-btn hard-shadow bg-green-600 border-2 border-green-800 text-white inline-flex w-auto px-8">Download All as .ZIP</button>
+                    </div>
+                    <div class="widget">
+                        <h2>3. Convert & Download</h2>
+                        <div class="form-group">
+                            <label for="batchToFormat">Convert all to</label>
+                            <select id="batchToFormat" class="form-element"></select>
+                        </div>
+                        <div class="download-buttons">
+                            <button id="startBatchConvertBtn" class="aero-btn green" disabled>Start Batch</button>
+                            <button id="clearBatchBtn" class="aero-btn primary" disabled>Clear</button>
+                        </div>
+                        <div id="batchDownloadArea" class="hidden" style="margin-top: 15px;">
+                            <button id="batchDownloadBtn" class="aero-btn green">Download All as .ZIP</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-area">
+                    <div class="widget" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <h2>4. Files & Progress</h2>
+                        <div id="batchProgressArea" style="flex-grow: 1;">
+                            <ul id="batchFileList"></ul>
+                            <div id="noBatchFiles" style="display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--font-color-subheader); flex-grow: 1;">
+                               <i data-lucide="list-checks" style="width: 40px; height: 40px;"></i>
+                               <p>Select a category and upload files</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -290,85 +478,69 @@
         </div>
     </div>
 
-    <!-- Tool Templates -->
     <template id="imageToolsTemplate">
-        <button id="toggleImageToolsBtn" class="action-btn hard-shadow w-full flex items-center justify-center p-2 text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">
-            <i data-lucide="wand-2" class="w-5 h-5 mr-2"></i>
-            <span>Image Tools</span>
-        </button>
-        <div id="imageToolsContainer" class="hidden mt-4 space-y-4 bg-[#10182B] p-4 rounded-xl border-2 border-[#334155]">
-            <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Resize</label>
-                <div class="flex gap-2">
-                    <input type="number" id="resizeWidth" placeholder="Width" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
-                    <input type="number" id="resizeHeight" placeholder="Height" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
+        <button id="toggleImageToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="wand-2"></i>Image Tools</button>
+        <div id="imageToolsContainer" class="tools-container hidden">
+            <div class="tool-group">
+                <label>Resize</label>
+                <div class="tool-flex-group">
+                    <input type="number" id="resizeWidth" placeholder="Width" class="form-element">
+                    <input type="number" id="resizeHeight" placeholder="Height" class="form-element">
                 </div>
-                <button id="resizeBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Resize</button>
+                <button id="resizeBtn" class="aero-btn primary" style="margin-top: 10px;">Resize</button>
             </div>
-            
-            <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Rotate</label>
-                <input type="number" id="rotateAngle" placeholder="Angle (°)" value="90" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
-                <button id="rotateBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Rotate</button>
+            <div class="tool-group">
+                <label for="rotateAngle">Rotate</label>
+                <input type="number" id="rotateAngle" placeholder="Angle (°)" value="90" class="form-element">
+                <button id="rotateBtn" class="aero-btn primary" style="margin-top: 10px;">Rotate</button>
             </div>
-
-             <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Flip</label>
-                <div class="flex gap-2">
-                    <button id="flipHorizontalBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Flip Horizontal</button>
-                    <button id="flipVerticalBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Flip Vertical</button>
+             <div class="tool-group">
+                <label>Flip</label>
+                <div class="tool-flex-group">
+                    <button id="flipHorizontalBtn" class="aero-btn primary">Flip Horizontal</button>
+                    <button id="flipVerticalBtn" class="aero-btn primary">Flip Vertical</button>
                 </div>
             </div>
-
-            <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Background</label>
-                <button id="removeBgBtn" class="action-btn hard-shadow w-full bg-slate-200 text-slate-900 border-2 border-slate-400">Remove Background</button>
-            </div>
-            <hr class="border-slate-600 my-4">
-            <button id="addPreviewToQueueBtn" class="action-btn hard-shadow w-full flex items-center justify-center p-2 bg-green-600 text-white border-2 border-green-800">
-                <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i>
-                Add Edited Image to Queue
+            <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
+            <button id="addPreviewToQueueBtn" class="aero-btn green">
+                <i data-lucide="plus-circle"></i>Add Edited Image to Queue
             </button>
         </div>
     </template>
     
     <template id="videoToolsTemplate">
-        <button id="toggleVideoToolsBtn" class="action-btn hard-shadow w-full flex items-center justify-center p-2 text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">
-            <i data-lucide="scissors" class="w-5 h-5 mr-2"></i>
-            <span>Video Tools</span>
-        </button>
-        <div id="videoToolsContainer" class="hidden mt-4 space-y-4 bg-[#10182B] p-4 rounded-xl border-2 border-[#334155]">
-            <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Trim</label>
-                <div class="flex gap-2">
-                    <input type="text" id="trimStart" placeholder="Start (e.g., 00:00:05)" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
-                    <input type="text" id="trimEnd" placeholder="End (e.g., 00:00:15)" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
+        <button id="toggleVideoToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="scissors"></i>Video Tools</button>
+        <div id="videoToolsContainer" class="tools-container hidden">
+            <div class="tool-group">
+                <label>Trim</label>
+                <div class="tool-flex-group">
+                    <input type="text" id="trimStart" placeholder="Start (e.g., 00:00:05)" class="form-element">
+                    <input type="text" id="trimEnd" placeholder="End (e.g., 00:00:15)" class="form-element">
                 </div>
-                <button id="trimVideoBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Trim Video</button>
+                <button id="trimVideoBtn" class="aero-btn primary" style="margin-top: 10px;">Trim Video</button>
             </div>
-            <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Extract Audio</label>
-                <button id="extractAudioBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Extract Audio Track</button>
+            <div class="tool-group">
+                <label>Extract Audio</label>
+                <button id="extractAudioBtn" class="aero-btn primary">Extract Audio Track</button>
             </div>
         </div>
     </template>
 
     <template id="audioToolsTemplate">
-        <button id="toggleAudioToolsBtn" class="action-btn hard-shadow w-full flex items-center justify-center p-2 text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">
-            <i data-lucide="sliders-horizontal" class="w-5 h-5 mr-2"></i>
-            <span>Audio Tools</span>
-        </button>
-        <div id="audioToolsContainer" class="hidden mt-4 space-y-4 bg-[#10182B] p-4 rounded-xl border-2 border-[#334155]">
-            <div class="space-y-2">
-                <label class="block text-sm font-bold text-[#94A3B8]">Trim</label>
-                <div class="flex gap-2">
-                    <input type="text" id="trimAudioStart" placeholder="Start (e.g., 00:00:05)" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
-                    <input type="text" id="trimAudioEnd" placeholder="End (e.g., 00:00:15)" class="form-element w-full p-2 bg-[#0A0F1E] border-2 border-[#334155] rounded-lg font-semibold text-white">
+        <button id="toggleAudioToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="sliders-horizontal"></i>Audio Tools</button>
+        <div id="audioToolsContainer" class="tools-container hidden">
+            <div class="tool-group">
+                <label>Trim</label>
+                <div class="tool-flex-group">
+                    <input type="text" id="trimAudioStart" placeholder="Start (e.g., 00:00:05)" class="form-element">
+                    <input type="text" id="trimAudioEnd" placeholder="End (e.g., 00:00:15)" class="form-element">
                 </div>
-                <button id="trimAudioBtn" class="action-btn hard-shadow w-full text-white border-2 border-[#3b82f6]" style="background-color: #1e40af;">Trim Audio</button>
+                <button id="trimAudioBtn" class="aero-btn primary" style="margin-top: 10px;">Trim Audio</button>
             </div>
         </div>
     </template>
+    
+    <div id="bg-credit">Photo by Vincent Botta on Unsplash</div>
 
     <script type="module">
         const { createFFmpeg, fetchFile } = FFmpeg;
@@ -386,18 +558,32 @@
         const previewArea = document.getElementById('previewArea'), imagePreview = document.getElementById('imagePreview'), videoPreview = document.getElementById('videoPreview'), audioPreview = document.getElementById('audioPreview'), textPreview = document.getElementById('textPreview'), noPreview = document.getElementById('noPreview');
         const downloadList = document.getElementById('downloadList'), downloadAllBtn = document.getElementById('downloadAllBtn'), clearListBtn = document.getElementById('clearListBtn'), downloadListEmpty = document.getElementById('downloadListEmpty');
         const singleFileConverter = document.getElementById('singleFileConverter');
-        const previewLabel = document.getElementById('previewLabel');
         const toolsSection = document.getElementById('toolsSection');
+        const urlInput = document.getElementById('urlInput'), urlBtn = document.getElementById('urlBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
         
         // Batch elements
         const batchDropZone = document.getElementById('batchDropZone'), batchFileInput = document.getElementById('batchFileInput');
-        const batchToFormat = document.getElementById('batchToFormat'), startBatchConvertBtn = document.getElementById('startBatchConvertBtn'), clearBatchBtn = document.getElementById('clearBatchBtn');
-        const batchFileList = document.getElementById('batchFileList'), noBatchFiles = document.getElementById('noBatchFiles');
-        const batchDownloadArea = document.getElementById('batchDownloadArea'), batchDownloadBtn = document.getElementById('batchDownloadBtn');
+        const batchCategory = document.getElementById('batchCategory');
+        const batchToFormat = document.getElementById('batchToFormat');
+        const startBatchConvertBtn = document.getElementById('startBatchConvertBtn');
+        const clearBatchBtn = document.getElementById('clearBatchBtn');
+        const batchFileList = document.getElementById('batchFileList');
+        const noBatchFiles = document.getElementById('noBatchFiles');
+        const batchDownloadArea = document.getElementById('batchDownloadArea');
+        const batchDownloadBtn = document.getElementById('batchDownloadBtn');
+        const batchFileCount = document.getElementById('batchFileCount');
 
         let currentFile = null, activeTab = 'image', convertedFiles = [], batchFiles = [];
         let previewBlob = null;
         let appliedTools = [];
+
+        const formatOptions = {
+            image: ['png', 'jpeg', 'webp', 'bmp', 'gif'],
+            video: ['mp4', 'webm', 'mov', 'avi', 'mkv'],
+            audio: ['mp3', 'wav', 'ogg', 'flac'],
+            text: ['txt', 'csv', 'json']
+        };
 
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileInput.click());
@@ -411,22 +597,34 @@
         videoConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
         audioConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
         textConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
-        
-        // URL Import Listeners
-        document.getElementById('imageUrlBtn').addEventListener('click', (e) => handleUrlImport(e));
-        document.getElementById('videoUrlBtn').addEventListener('click', (e) => handleUrlImport(e));
-        document.getElementById('audioUrlBtn').addEventListener('click', (e) => handleUrlImport(e));
-        document.getElementById('textUrlBtn').addEventListener('click', (e) => handleUrlImport(e));
+        urlBtn.addEventListener('click', (e) => handleUrlImport(e));
+        themeToggleBtn.addEventListener('click', toggleTheme);
         
         downloadAllBtn.addEventListener('click', downloadAllAsZip);
         clearListBtn.addEventListener('click', clearDownloadList);
         
         // Batch listeners
+        batchCategory.addEventListener('change', updateBatchOptions);
         batchDropZone.addEventListener('click', () => batchFileInput.click());
         batchFileInput.addEventListener('change', (e) => handleBatchUpload(e.target.files));
         startBatchConvertBtn.addEventListener('click', startBatchConversion);
         clearBatchBtn.addEventListener('click', clearBatchList);
         batchDownloadBtn.addEventListener('click', downloadBatchZip);
+
+        // --- Theme ---
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
 
         // --- FFmpeg Progress ---
         ffmpeg.setLogger(({ type, message }) => {
@@ -482,45 +680,39 @@
         function switchTab(tabName) {
             activeTab = tabName;
             const isBatch = tabName === 'batch';
-            
+
             [imageTabBtn, videoTabBtn, audioTabBtn, textTabBtn, batchTabBtn].forEach(btn => btn.classList.remove('active'));
             document.getElementById(`${tabName}TabBtn`).classList.add('active');
             
             [imageConverterTab, videoConverterTab, audioConverterTab, textConverterTab].forEach(tab => tab.classList.remove('active'));
+            
+            batchConverterTab.style.display = isBatch ? 'block' : 'none';
+            singleFileConverter.style.display = isBatch ? 'none' : 'block';
+            
             if (!isBatch) {
                 document.getElementById(`${tabName}ConverterTab`).classList.add('active');
             }
             
-            batchConverterTab.style.display = isBatch ? 'block' : 'none';
-            singleFileConverter.style.display = isBatch ? 'none' : 'grid';
-            
             setupTools(tabName);
-            updatePreview(currentFile); // Re-run preview logic for the new tab
+            updatePreview(currentFile);
         }
 
         function setupTools(tabName) {
             toolsSection.innerHTML = '';
             let templateId;
 
-            if (tabName === 'image') {
-                templateId = 'imageToolsTemplate';
-            } else if (tabName === 'video') {
-                templateId = 'videoToolsTemplate';
-            } else if (tabName === 'audio') {
-                 templateId = 'audioToolsTemplate';
-            } else {
-                return;
-            }
+            if (tabName === 'image') templateId = 'imageToolsTemplate';
+            else if (tabName === 'video') templateId = 'videoToolsTemplate';
+            else if (tabName === 'audio') templateId = 'audioToolsTemplate';
+            else return;
 
             const template = document.getElementById(templateId);
             if (template) {
                 toolsSection.appendChild(template.content.cloneNode(true));
                 lucide.createIcons();
                 
-                // Wire up specific tool buttons
                 if (tabName === 'image') {
                     document.getElementById('toggleImageToolsBtn').addEventListener('click', () => document.getElementById('imageToolsContainer').classList.toggle('hidden'));
-                    document.getElementById('removeBgBtn').addEventListener('click', (e) => handleImageTool('removeBg', e));
                     document.getElementById('resizeBtn').addEventListener('click', (e) => handleImageTool('resize', e));
                     document.getElementById('rotateBtn').addEventListener('click', (e) => handleImageTool('rotate', e));
                     document.getElementById('flipHorizontalBtn').addEventListener('click', (e) => handleImageTool('flipHorizontal', e));
@@ -540,8 +732,8 @@
         function handleFile(file) {
             if (!file) return;
             currentFile = file;
-            previewBlob = file; // Initialize preview blob
-            appliedTools = []; // Reset applied tools
+            previewBlob = file; 
+            appliedTools = []; 
             fileNameDisplay.textContent = file.name;
             
             const fileExt = file.name.split('.').pop().toLowerCase();
@@ -550,46 +742,43 @@
             const audioFormats = ['mp3', 'wav', 'ogg', 'flac', 'm4a'];
             const textFormats = ['txt', 'csv', 'json'];
 
-            if (imageFormats.includes(fileExt)) {
-                switchTab('image');
-                document.getElementById('imageFromFormat').value = fileExt === 'jpg' ? 'jpeg' : fileExt;
-            } else if (videoFormats.includes(fileExt)) {
-                switchTab('video');
-                document.getElementById('videoFromFormat').value = fileExt;
-            } else if (audioFormats.includes(fileExt)) {
-                switchTab('audio');
-                document.getElementById('audioFromFormat').value = fileExt;
-            } else if (textFormats.includes(fileExt)) {
-                switchTab('text');
-                document.getElementById('textFromFormat').value = fileExt;
-            } else {
-                updatePreview(null); // No preview for unknown types
+            let detectedTab = null;
+            if (imageFormats.includes(fileExt)) detectedTab = 'image';
+            else if (videoFormats.includes(fileExt)) detectedTab = 'video';
+            else if (audioFormats.includes(fileExt)) detectedTab = 'audio';
+            else if (textFormats.includes(fileExt)) detectedTab = 'text';
+
+            if (detectedTab && activeTab !== detectedTab) {
+                switchTab(detectedTab);
+                const fromFormatEl = document.querySelector(`#${detectedTab}ConverterTab .from-format`);
+                fromFormatEl.value = fileExt === 'jpg' ? 'jpeg' : fileExt;
             }
             updatePreview(file);
         }
         
         function updatePreview(file) {
             [imagePreview, videoPreview, audioPreview, textPreview, noPreview].forEach(el => el.classList.add('hidden'));
-            if (!file) {
+            if (!file || !previewBlob) {
                 noPreview.classList.remove('hidden');
                 return;
             }
 
-            if (file.type.startsWith('image/') && activeTab === 'image') {
-                const url = URL.createObjectURL(previewBlob);
+            const url = URL.createObjectURL(previewBlob);
+
+            if (previewBlob.type.startsWith('image/') && activeTab === 'image') {
                 imagePreview.src = url;
                 imagePreview.classList.remove('hidden');
             } else if (file.type.startsWith('video/') && activeTab === 'video') {
-                const url = URL.createObjectURL(file);
                 videoPreview.src = url;
                 videoPreview.classList.remove('hidden');
             } else if (file.type.startsWith('audio/') && activeTab === 'audio') {
-                const url = URL.createObjectURL(file);
                 audioPreview.src = url;
                 audioPreview.classList.remove('hidden');
             } else if ((file.type.startsWith('text/') || file.type.includes('json')) && activeTab === 'text') {
-                 noPreview.classList.remove('hidden');
-                 handleTextTool('wordCount');
+                 file.text().then(content => {
+                     textPreview.textContent = content;
+                     textPreview.classList.remove('hidden');
+                 });
             } else {
                 noPreview.classList.remove('hidden');
             }
@@ -598,30 +787,18 @@
         async function handleConversion(action, event) {
             if (!currentFile) { displayMessage('Please select a file first!', 'error'); return; }
             
-            const buttonEl = event.target.closest('.action-btn');
+            const buttonEl = event.target.closest('.aero-btn');
             const fromFormatEl = document.querySelector(`#${activeTab}ConverterTab .from-format`);
             const toFormatEl = document.querySelector(`#${activeTab}ConverterTab .to-format`);
             
             let fromFormat = fromFormatEl.value;
-            if (fromFormat === 'auto') {
-                fromFormat = currentFile.name.split('.').pop().toLowerCase();
-                if ([...fromFormatEl.options].some(opt => opt.value === fromFormat)) {
-                    fromFormatEl.value = fromFormat;
-                } else {
-                    displayMessage(`Could not auto-detect format for ${currentFile.name}.`, 'error');
-                    return;
-                }
-            }
+            if (fromFormat === 'auto') fromFormat = currentFile.name.split('.').pop().toLowerCase();
 
             setLoading(buttonEl, true);
             try {
-                if (activeTab === 'audio') {
-                    await performAudioConversion(fromFormat, toFormatEl.value);
-                } else if (activeTab === 'video') {
-                    await performVideoConversion(fromFormat, toFormatEl.value);
-                } else if (activeTab === 'text') {
-                    await performTextConversion(fromFormat, toFormatEl.value);
-                }
+                if (activeTab === 'audio') await performAudioConversion(fromFormat, toFormatEl.value);
+                else if (activeTab === 'video') await performVideoConversion(fromFormat, toFormatEl.value);
+                else if (activeTab === 'text') await performTextConversion(fromFormat, toFormatEl.value);
             } catch (error) { 
                 console.error('Action Error:', error); 
                 displayMessage(`An error occurred: ${error.message}`, 'error');
@@ -633,23 +810,12 @@
         async function handleImageConversion(action, event) {
              if (!currentFile) { displayMessage('Please select a file first!', 'error'); return; }
             
-            const buttonEl = event.target.closest('.action-btn');
-            const fromFormatEl = document.querySelector(`#${activeTab}ConverterTab .from-format`);
+            const buttonEl = event.target.closest('.aero-btn');
             const toFormatEl = document.querySelector(`#${activeTab}ConverterTab .to-format`);
             
-            let fromFormat = fromFormatEl.value;
-            if (fromFormat === 'auto') {
-                fromFormat = currentFile.name.split('.').pop().toLowerCase();
-                if ([...fromFormatEl.options].some(opt => opt.value === fromFormat)) {
-                    fromFormatEl.value = fromFormat;
-                } else {
-                    displayMessage(`Could not auto-detect format for ${currentFile.name}.`, 'error');
-                    return;
-                }
-            }
             setLoading(buttonEl, true);
             try {
-                 await performImageConversion(fromFormat, toFormatEl.value);
+                 await performImageConversion(toFormatEl.value);
             } catch (error) { 
                 console.error('Action Error:', error); 
                 displayMessage(`An error occurred: ${error.message}`, 'error');
@@ -663,34 +829,18 @@
                 displayMessage('Please select an image file first!', 'error');
                 return;
             }
-            const buttonEl = event.target.closest('.action-btn');
+            const buttonEl = event.target.closest('.aero-btn');
             setLoading(buttonEl, true);
             try {
                 let newBlob;
                 switch(tool) {
-                    case 'removeBg':
-                        newBlob = await performBackgroundRemoval(previewBlob);
-                        appliedTools.push('bg-removed');
-                        break;
-                    case 'resize':
-                        newBlob = await performResize(previewBlob);
-                        appliedTools.push('resized');
-                        break;
-                    case 'rotate':
-                        newBlob = await performRotation(previewBlob);
-                        appliedTools.push('rotated');
-                        break;
-                    case 'flipHorizontal':
-                        newBlob = await performFlip(previewBlob, 'horizontal');
-                        appliedTools.push('flipped-h');
-                        break;
-                    case 'flipVertical':
-                        newBlob = await performFlip(previewBlob, 'vertical');
-                        appliedTools.push('flipped-v');
-                        break;
+                    case 'resize': newBlob = await performResize(previewBlob); appliedTools.push('resized'); break;
+                    case 'rotate': newBlob = await performRotation(previewBlob); appliedTools.push('rotated'); break;
+                    case 'flipHorizontal': newBlob = await performFlip(previewBlob, 'horizontal'); appliedTools.push('flipped-h'); break;
+                    case 'flipVertical': newBlob = await performFlip(previewBlob, 'vertical'); appliedTools.push('flipped-v'); break;
                 }
                 previewBlob = newBlob;
-                updatePreview(previewBlob);
+                updatePreview(currentFile); // Pass original file to keep context, preview uses previewBlob
                 displayMessage(`Applied ${tool}. Edit the preview or add to queue.`, 'success');
             } catch (error) {
                  console.error(`${tool} Error:`, error); 
@@ -705,16 +855,12 @@
                 displayMessage('Please select a video file first!', 'error');
                 return;
             }
-            const buttonEl = event.target.closest('.action-btn');
+            const buttonEl = event.target.closest('.aero-btn');
             setLoading(buttonEl, true);
             try {
                 switch(tool) {
-                    case 'trim':
-                        await performVideoTrim();
-                        break;
-                    case 'extractAudio':
-                        await performVideoExtractAudio();
-                        break;
+                    case 'trim': await performVideoTrim(); break;
+                    case 'extractAudio': await performVideoExtractAudio(); break;
                 }
             } catch (error) {
                  console.error(`${tool} Error:`, error); 
@@ -729,14 +875,10 @@
                 displayMessage('Please select an audio file first!', 'error');
                 return;
             }
-            const buttonEl = event.target.closest('.action-btn');
+            const buttonEl = event.target.closest('.aero-btn');
             setLoading(buttonEl, true);
             try {
-                switch(tool) {
-                    case 'trim':
-                        await performAudioTrim();
-                        break;
-                }
+                if (tool === 'trim') await performAudioTrim();
             } catch (error) {
                  console.error(`${tool} Error:`, error); 
                  displayMessage(`An error occurred: ${error.message}`, 'error');
@@ -745,25 +887,8 @@
             }
         }
 
-        async function handleTextTool(tool, event) {
-            if (!currentFile || !currentFile.type.startsWith('text/')) {
-                return;
-            }
-            try {
-                switch(tool) {
-                    case 'wordCount':
-                        await performWordCount();
-                        break;
-                }
-            } catch (error) {
-                 console.error(`${tool} Error:`, error); 
-                 displayMessage(`An error occurred: ${error.message}`, 'error');
-            }
-        }
-        
         async function handleUrlImport(event) {
-            const buttonEl = event.target.closest('.action-btn');
-            const urlInput = document.getElementById(`${activeTab}UrlInput`);
+            const buttonEl = event.target.closest('.aero-btn');
             const url = urlInput.value.trim();
 
             if (!url) {
@@ -775,7 +900,8 @@
             displayMessage('Fetching file from URL...', 'info');
 
             try {
-                const response = await fetch(url);
+                // Using a CORS proxy for wider compatibility
+                const response = await fetch(`https://cors-anywhere.herokuapp.com/${url}`);
                 if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
                 const blob = await response.blob();
                 
@@ -797,16 +923,14 @@
 
         async function performFFmpegOperation(args, outputFilename, outputType) {
             displayMessage('Loading media engine...', 'info');
-            if (!ffmpeg.isLoaded()) {
-                await ffmpeg.load();
-            }
+            if (!ffmpeg.isLoaded()) await ffmpeg.load();
             displayMessage('Processing...', 'info');
             const inputFilename = `input.${currentFile.name.split('.').pop()}`;
             ffmpeg.FS('writeFile', inputFilename, await fetchFile(currentFile));
             await ffmpeg.run(...args);
             const data = ffmpeg.FS('readFile', outputFilename);
             const blob = new Blob([data.buffer], { type: outputType });
-            addFileToDownloadList(blob, outputFilename.split('.').pop(), `_${args[0]}`);
+            addFileToDownloadList(blob, outputFilename.split('.').pop(), `_converted`);
             displayMessage('Operation successful.', 'success');
             ffmpeg.FS('unlink', inputFilename);
             ffmpeg.FS('unlink', outputFilename);
@@ -833,154 +957,85 @@
             await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-vn', '-acodec', 'libmp3lame', outputFilename], outputFilename, 'audio/mpeg');
         }
 
-        async function performWordCount() {
-            const content = await currentFile.text();
-            const charCount = content.length;
-            const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-            const lineCount = content.split('\n').length;
-            const resultEl = document.getElementById('wordCountResult');
-            if (resultEl) {
-                resultEl.innerHTML = `Lines: ${lineCount} | Words: ${wordCount} | Chars: ${charCount}`;
-            }
-        }
-
-        async function performAudioConversion(from, to) {
-            if (from === to) throw new Error('Formats cannot be the same.');
-            const outputFilename = `output.${to}`;
-            await performFFmpegOperation(['-i', `input.${from}`, outputFilename], outputFilename, `audio/${to}`);
-        }
-        
-        async function performVideoConversion(from, to) {
-            if (from === to) throw new Error('Formats cannot be the same.');
-            const outputFilename = `output.${to}`;
-             await performFFmpegOperation(['-i', `input.${from}`, outputFilename], outputFilename, `video/${to}`);
-        }
-
-        async function performImageConversion(from, to) {
-            if (from === to) throw new Error('Formats cannot be the same.');
+        async function performImageConversion(to) {
             const convertedData = await convertImage(previewBlob, to);
             addFileToDownloadList(convertedData, to, `_converted`);
             displayMessage(`File added to queue.`, 'success');
         }
 
         async function performTextConversion(from, to) {
-             if (from === to) throw new Error('Formats cannot be the same.');
             const content = await currentFile.text();
             const convertedData = convertText(content, from, to);
             addFileToDownloadList(new Blob([convertedData], {type: 'text/plain'}), to, `_converted`);
             displayMessage(`File added to queue.`, 'success');
         }
         
-        async function performBackgroundRemoval(sourceBlob) {
-            displayMessage('Removing background...', 'info');
-            const module = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.0/dist/browser.mjs");
-            const removeBackground = module.default;
-            if (typeof removeBackground !== 'function') throw new Error('BG removal library failed.');
-            return await removeBackground(sourceBlob);
-        }
-
         function performResize(sourceBlob) {
             const width = parseInt(document.getElementById('resizeWidth').value);
             const height = parseInt(document.getElementById('resizeHeight').value);
-            if (!width || !height || width <= 0 || height <= 0) {
-                throw new Error('Please enter valid width and height.');
-            }
-            
+            if (!width || !height || width <= 0 || height <= 0) throw new Error('Please enter valid width and height.');
             return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(sourceBlob);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => {
-                            if (blob) resolve(blob);
-                            else reject(new Error('Canvas to Blob conversion failed.'));
-                        }, sourceBlob.type);
-                    };
-                    img.onerror = () => reject(new Error('Failed to load image.'));
+                const img = new Image();
+                img.src = URL.createObjectURL(sourceBlob);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(new Blob([blob], {type: sourceBlob.type}));
+                        else reject(new Error('Canvas to Blob conversion failed.'));
+                    }, sourceBlob.type);
                 };
-                reader.onerror = () => reject(new Error('Failed to read file.'));
+                img.onerror = () => reject(new Error('Failed to load image.'));
             });
         }
 
         function performRotation(sourceBlob) {
             const angle = parseInt(document.getElementById('rotateAngle').value);
-            if (isNaN(angle)) {
-                throw new Error('Please enter a valid angle.');
-            }
-
+            if (isNaN(angle)) throw new Error('Please enter a valid angle.');
             return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(sourceBlob);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const rads = angle * Math.PI / 180;
-                        const a = Math.abs(Math.cos(rads));
-                        const b = Math.abs(Math.sin(rads));
-                        canvas.width = img.height * b + img.width * a;
-                        canvas.height = img.height * a + img.width * b;
-                        
-                        ctx.translate(canvas.width / 2, canvas.height / 2);
-                        ctx.rotate(rads);
-                        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                        
-                        canvas.toBlob((blob) => {
-                            if (blob) resolve(blob);
-                            else reject(new Error('Canvas to Blob conversion failed.'));
-                        }, sourceBlob.type);
-                    };
-                    img.onerror = () => reject(new Error('Failed to load image.'));
+                const img = new Image();
+                img.src = URL.createObjectURL(sourceBlob);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const rads = angle * Math.PI / 180;
+                    const a = Math.abs(Math.cos(rads)), b = Math.abs(Math.sin(rads));
+                    canvas.width = img.height * b + img.width * a;
+                    canvas.height = img.height * a + img.width * b;
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(rads);
+                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                    canvas.toBlob((blob) => {
+                         if (blob) resolve(new Blob([blob], {type: sourceBlob.type}));
+                        else reject(new Error('Canvas to Blob conversion failed.'));
+                    }, sourceBlob.type);
                 };
-                reader.onerror = () => reject(new Error('Failed to read file.'));
             });
         }
         
         function performFlip(sourceBlob, direction) {
             return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(sourceBlob);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        if (direction === 'horizontal') {
-                            ctx.translate(img.width, 0);
-                            ctx.scale(-1, 1);
-                        } else { // vertical
-                            ctx.translate(0, img.height);
-                            ctx.scale(1, -1);
-                        }
-                        ctx.drawImage(img, 0, 0);
-                        canvas.toBlob((blob) => {
-                            if (blob) resolve(blob);
-                            else reject(new Error('Canvas to Blob conversion failed.'));
-                        }, sourceBlob.type);
-                    };
-                    img.onerror = () => reject(new Error('Failed to load image.'));
+                const img = new Image();
+                img.src = URL.createObjectURL(sourceBlob);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width; canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    if (direction === 'horizontal') { ctx.translate(img.width, 0); ctx.scale(-1, 1); } 
+                    else { ctx.translate(0, img.height); ctx.scale(1, -1); }
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(new Blob([blob], {type: sourceBlob.type}));
+                        else reject(new Error('Canvas to Blob conversion failed.'));
+                    }, sourceBlob.type);
                 };
-                reader.onerror = () => reject(new Error('Failed to read file.'));
             });
         }
 
         function addPreviewToQueue() {
-            if (!previewBlob) {
-                displayMessage('No preview to add.', 'error');
-                return;
-            }
+            if (!previewBlob) { displayMessage('No preview to add.', 'error'); return; }
             const extension = previewBlob.type.split('/')[1];
             const suffix = appliedTools.length > 0 ? `_${appliedTools.join('_')}` : '_edited';
             addFileToDownloadList(previewBlob, extension, suffix);
@@ -989,7 +1044,7 @@
 
         function addFileToDownloadList(blob, extension, suffix) {
             const url = URL.createObjectURL(blob);
-            const originalFilename = currentFile.name.split('.').slice(0, -1).join('.') || `file-${Date.now()}`;
+            const originalFilename = (currentFile.name || 'file').split('.').slice(0, -1).join('.') || `file-${Date.now()}`;
             const newFilename = `${originalFilename}${suffix}.${extension}`;
             
             convertedFiles.push({ name: newFilename, blob, url });
@@ -1004,31 +1059,18 @@
                 downloadListEmpty.classList.add('hidden');
                 convertedFiles.forEach((file, index) => {
                     const li = document.createElement('li');
-                    li.className = "flex items-center p-2 bg-[#0A0F1E] rounded-lg border-2 border-[#334155]";
-                    
                     let icon;
-                    if (file.blob.type.startsWith('image/')) {
-                        icon = `<img src="${file.url}" class="w-full h-full object-cover rounded-md">`;
-                    } else if (file.blob.type.startsWith('video/')) {
-                        icon = `<i data-lucide="film" class="w-6 h-6 text-[#94A3B8]"></i>`;
-                    } else if (file.blob.type.startsWith('audio/')) {
-                        icon = `<i data-lucide="music" class="w-6 h-6 text-[#94A3B8]"></i>`;
-                    } else {
-                        icon = `<i data-lucide="file-text" class="w-6 h-6 text-[#94A3B8]"></i>`;
-                    }
+                    if (file.blob.type.startsWith('image/')) icon = 'image';
+                    else if (file.blob.type.startsWith('video/')) icon = 'film';
+                    else if (file.blob.type.startsWith('audio/')) icon = 'music';
+                    else icon = 'file-text';
                     
                     li.innerHTML = `
-                        <div class="w-10 h-10 flex items-center justify-center bg-[#10182B] rounded-md mr-3 flex-shrink-0 border-2 border-[#334155]">
-                            ${icon}
-                        </div>
-                        <span class="truncate text-[#E2E8F0] text-sm font-semibold flex-grow">${file.name}</span>
-                        <div class="flex items-center flex-shrink-0 ml-4">
-                            <a href="${file.url}" download="${file.name}" class="p-2 text-[#94A3B8] hover:text-[#1e40af] transition-colors">
-                                <i data-lucide="download" class="w-5 h-5"></i>
-                            </a>
-                            <button data-index="${index}" class="remove-download-item p-2 text-[#94A3B8] hover:text-red-400 transition-colors">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
+                        <i data-lucide="${icon}" class="file-icon"></i>
+                        <span class="file-name">${file.name}</span>
+                        <div class="file-actions">
+                            <a href="${file.url}" download="${file.name}"><i data-lucide="download"></i></a>
+                            <button data-index="${index}" class="remove-download-item"><i data-lucide="trash-2"></i></button>
                         </div>
                     `;
                     downloadList.appendChild(li);
@@ -1052,9 +1094,6 @@
             const hasFiles = convertedFiles.length > 0;
             downloadAllBtn.disabled = convertedFiles.length < 2;
             clearListBtn.disabled = !hasFiles;
-            [downloadAllBtn, clearListBtn].forEach(btn => {
-                btn.classList.toggle('btn-disabled', btn.disabled);
-            });
         }
 
         function clearDownloadList() {
@@ -1080,16 +1119,32 @@
         }
         
         // --- Batch Conversion Logic ---
+        function updateBatchOptions() {
+            const category = batchCategory.value;
+            const formats = formatOptions[category] || [];
+            
+            batchToFormat.innerHTML = formats.map(f => `<option value="${f}">${f.toUpperCase()}</option>`).join('');
+            
+            const acceptMap = {
+                image: 'image/*',
+                video: 'video/*',
+                audio: 'audio/*',
+                text: 'text/plain,application/json,text/csv'
+            };
+            batchFileInput.accept = acceptMap[category] || '*/*';
+            
+            batchFiles = [];
+            updateBatchFileList();
+        }
+
         function handleBatchUpload(files) {
-            const newFiles = [...files]
-                .filter(file => file.type.startsWith('image/'))
-                .map(file => ({
-                    file,
-                    status: 'pending',
-                    convertedBlob: null,
-                    newFilename: null
-                }));
-            batchFiles.push(...newFiles);
+            const category = batchCategory.value;
+            const newFiles = [...files].filter(file => {
+                if (category === 'text') return file.type.startsWith('text/') || file.type.includes('json') || file.type.includes('csv');
+                return file.type.startsWith(`${category}/`);
+            });
+            
+            batchFiles.push(...newFiles.map(file => ({ file, status: 'pending', convertedBlob: null, newFilename: null })));
             updateBatchFileList();
         }
 
@@ -1105,37 +1160,26 @@
 
         function updateBatchFileList() {
             batchFileList.innerHTML = '';
+            batchFileCount.textContent = `${batchFiles.length} files selected`;
             if (batchFiles.length > 0) {
                 noBatchFiles.style.display = 'none';
                 batchFiles.forEach((item, index) => {
                     const li = document.createElement('li');
                     li.id = `batch-file-${index}`;
-                    li.className = "flex items-center p-2 bg-[#0A0F1E] rounded-lg border-2 border-[#334155]";
                     
                     let statusBadge;
                     switch(item.status) {
-                        case 'converting':
-                            statusBadge = `<span class="status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-yellow-900/50 text-yellow-300">Converting...</span>`;
-                            break;
-                        case 'done':
-                             statusBadge = `<span class="status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-green-900/50 text-green-300">Done</span>`;
-                            break;
-                        case 'error':
-                            statusBadge = `<span class="status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-red-900/50 text-red-300">Error</span>`;
-                            break;
-                        default:
-                            statusBadge = `<span class="status-badge text-xs font-bold mr-2 px-2 py-0.5 rounded-full bg-[#1E293B] text-[#94A3B8]">Pending</span>`;
+                        case 'converting': statusBadge = `<span class="status-badge converting">Converting</span>`; break;
+                        case 'done': statusBadge = `<span class="status-badge done">Done</span>`; break;
+                        case 'error': statusBadge = `<span class="status-badge error">Error</span>`; break;
+                        default: statusBadge = `<span class="status-badge pending">Pending</span>`;
                     }
 
                     li.innerHTML = `
-                        <i data-lucide="image" class="w-5 h-5 mr-3 text-[#94A3B8] flex-shrink-0"></i>
-                        <span class="truncate font-semibold text-sm text-[#E2E8F0]">${item.file.name}</span>
-                        <div class="flex items-center ml-auto">
-                            ${statusBadge}
-                            <button data-index="${index}" class="remove-batch-item p-1 text-[#94A3B8] hover:text-red-400">
-                                <i data-lucide="x" class="w-5 h-5"></i>
-                            </button>
-                        </div>
+                        <i data-lucide="file" class="file-icon"></i>
+                        <span class="file-name">${item.file.name}</span>
+                        ${statusBadge}
+                        <button data-index="${index}" class="remove-batch-item file-actions"><i data-lucide="x"></i></button>
                     `;
                     batchFileList.appendChild(li);
                 });
@@ -1144,7 +1188,7 @@
                     btn.addEventListener('click', (e) => removeBatchItem(parseInt(e.currentTarget.dataset.index)));
                 });
             } else {
-                noBatchFiles.style.display = 'block';
+                noBatchFiles.style.display = 'flex';
             }
             
             const isConverting = batchFiles.some(item => item.status === 'converting');
@@ -1153,25 +1197,42 @@
 
             startBatchConvertBtn.disabled = !hasFiles || isConverting;
             clearBatchBtn.disabled = !hasFiles || isConverting;
-            [startBatchConvertBtn, clearBatchBtn].forEach(btn => btn.classList.toggle('btn-disabled', btn.disabled));
-            
-            batchDownloadArea.classList.toggle('hidden', !hasConvertedFiles);
+            batchDownloadArea.classList.toggle('hidden', !hasConvertedFiles || isConverting);
         }
 
         async function startBatchConversion() {
             setLoading(startBatchConvertBtn, true);
-            updateBatchFileList(); // Update UI to show converting state
+            updateBatchFileList();
 
             const to = batchToFormat.value;
-            
-            const conversionPromises = batchFiles.map(async (item, index) => {
-                if (item.status !== 'pending') return;
+            const category = batchCategory.value;
 
+            for (const [index, item] of batchFiles.entries()) {
+                 if (item.status !== 'pending') continue;
                 item.status = 'converting';
                 updateBatchFileList();
 
                 try {
-                    const convertedBlob = await convertImage(item.file, to);
+                    let convertedBlob;
+                    const from = item.file.name.split('.').pop();
+                    if (category === 'image') {
+                        convertedBlob = await convertImage(item.file, to);
+                    } else if (category === 'video' || category === 'audio') {
+                        if (!ffmpeg.isLoaded()) await ffmpeg.load();
+                        const inputFilename = `input.${from}`;
+                        const outputFilename = `output.${to}`;
+                        ffmpeg.FS('writeFile', inputFilename, await fetchFile(item.file));
+                        await ffmpeg.run('-i', inputFilename, outputFilename);
+                        const data = ffmpeg.FS('readFile', outputFilename);
+                        convertedBlob = new Blob([data.buffer], { type: `${category}/${to}` });
+                        ffmpeg.FS('unlink', inputFilename);
+                        ffmpeg.FS('unlink', outputFilename);
+                    } else if (category === 'text') {
+                        const content = await item.file.text();
+                        const convertedText = convertText(content, from, to);
+                        convertedBlob = new Blob([convertedText], {type: 'text/plain'});
+                    }
+
                     item.convertedBlob = convertedBlob;
                     item.newFilename = `${item.file.name.split('.').slice(0, -1).join('.')}.${to}`;
                     item.status = 'done';
@@ -1180,9 +1241,8 @@
                     item.status = 'error';
                 }
                 updateBatchFileList();
-            });
+            }
 
-            await Promise.all(conversionPromises);
             setLoading(startBatchConvertBtn, false);
             updateBatchFileList();
         }
@@ -1231,12 +1291,9 @@
             messageArea.innerHTML = '';
             const p = document.createElement('p');
             p.textContent = text;
-            const colors = {
-                error: 'text-red-400',
-                success: 'text-green-400',
-                info: 'text-blue-400'
-            };
-            p.className = `font-bold ${colors[type] || 'text-slate-400'}`;
+            const colors = { error: '#F89B9B', success: '#90E094', info: '#79BCF8' };
+            const darkColors = { error: '#D32F2F', success: '#388E3C', info: '#0288D1' };
+            p.style.color = document.body.classList.contains('dark-mode') ? colors[type] : darkColors[type];
             messageArea.appendChild(p);
         }
         function convertText(data, from, to) {
@@ -1290,10 +1347,13 @@
         }
 
         // Initial setup
+        const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark mode
+        applyTheme(savedTheme);
         lucide.createIcons();
         switchTab('image');
+        updateBatchOptions();
         renderDownloadList();
-        updateBatchFileList(); // Also initialize batch list on load
+        updateBatchFileList();
     </script>
 </body>
 </html>
