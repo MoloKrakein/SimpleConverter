@@ -11,6 +11,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- For Markdown Parsing -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -266,6 +268,11 @@
             background-color: var(--preview-bg); border-radius: 6px;
             border: 1px solid var(--panel-border); padding: 10px; overflow: hidden;
         }
+        #previewArea img {
+             /* This is important for cropper.js to work correctly */
+            display: block;
+            max-width: 100%;
+        }
         #imagePreview, #videoPreview, #audioPreview, #textPreview { max-width: 100%; max-height: 250px; }
         #noPreview { text-align: center; color: var(--font-color-subheader); }
 
@@ -274,7 +281,10 @@
             border: 1px solid var(--panel-border); padding: 10px;
             min-height: 150px; display: flex; flex-direction: column;
         }
-        #downloadList, #batchFileList { list-style: none; padding: 0; margin: 0; flex-grow: 1; max-height: 200px; overflow-y: auto; }
+        #downloadList, #batchFileList { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        #downloadList { max-height: 200px; }
+        #batchFileList { max-height: auto; }
+
         #downloadList li, #batchFileList li {
             display: flex; align-items: center; padding: 8px;
             background-color: var(--interactive-bg); border-radius: 4px;
@@ -305,6 +315,91 @@
         .tool-group:last-child { margin-bottom: 0; }
         .tool-group label { display: block; margin-bottom: 5px; font-weight: 700; }
         .tool-flex-group { display: flex; gap: 10px; }
+
+        /* --- Tooltips --- */
+        .label-with-tooltip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .label-with-tooltip label {
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        .help-icon {
+            position: relative;
+            cursor: help;
+            color: var(--font-color-subheader);
+            display: inline-flex;
+            align-items: center;
+        }
+        .help-icon::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 150%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 240px;
+            padding: 10px;
+            border-radius: 8px;
+            background: var(--widget-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--font-color);
+            font-size: 12px;
+            font-weight: normal;
+            line-height: 1.4;
+            text-align: left;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+        .help-icon::after {
+            content: '';
+            position: absolute;
+            bottom: 150%;
+            left: 50%;
+            transform: translateX(-50%) translateY(calc(100% - 7px));
+            border: 8px solid transparent;
+            border-top-color: var(--panel-border);
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+            z-index: 9;
+            pointer-events: none;
+        }
+        .help-icon:hover::before,
+        .help-icon:hover::after {
+            visibility: visible;
+            opacity: 1;
+        }
+
+
+        /* --- Cropper.js custom styles --- */
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 6px;
+            box-shadow: 0 0 0 1px var(--font-color-header);
+        }
+
+        .cropper-view-box {
+            outline: 1px solid var(--font-color-header);
+        }
+
+        .cropper-line,
+        .cropper-point {
+            background-color: var(--font-color-header);
+        }
+        body.dark-mode .cropper-dashed {
+             border-color: rgba(255, 255, 255, 0.5);
+        }
+        body:not(.dark-mode) .cropper-dashed {
+            border-color: rgba(0, 0, 0, 0.5);
+        }
+
 
         /* --- Info Modal --- */
         .modal-overlay {
@@ -601,27 +696,63 @@
         <button id="toggleImageToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="wand-2"></i>Image Tools</button>
         <div id="imageToolsContainer" class="tools-container hidden">
             <div class="tool-group">
-                <label>Resize</label>
+                <div class="label-with-tooltip">
+                    <label>Resize</label>
+                    <span class="help-icon" data-tooltip="Enter the desired width and height in pixels. The image will be resized to these dimensions, potentially altering the aspect ratio."><i data-lucide="help-circle"></i></span>
+                </div>
                 <div class="tool-flex-group">
                     <input type="number" id="resizeWidth" placeholder="Width" class="form-element">
                     <input type="number" id="resizeHeight" placeholder="Height" class="form-element">
                 </div>
-                <button id="resizeBtn" class="aero-btn primary" style="margin-top: 10px;">Resize</button>
+                <button id="resizeBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="scaling"></i>Resize</button>
             </div>
             <div class="tool-group">
-                <label for="rotateAngle">Rotate</label>
+                <div class="label-with-tooltip">
+                    <label for="rotateAngle">Rotate</label>
+                    <span class="help-icon" data-tooltip="Enter an angle in degrees (e.g., 90) to rotate the image clockwise."><i data-lucide="help-circle"></i></span>
+                </div>
                 <input type="number" id="rotateAngle" placeholder="Angle (°)" value="90" class="form-element">
-                <button id="rotateBtn" class="aero-btn primary" style="margin-top: 10px;">Rotate</button>
+                <button id="rotateBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="rotate-cw"></i>Rotate</button>
             </div>
              <div class="tool-group">
-                <label>Flip</label>
+                <div class="label-with-tooltip">
+                    <label>Flip</label>
+                    <span class="help-icon" data-tooltip="Flip the image horizontally (left to right) or vertically (top to bottom)."><i data-lucide="help-circle"></i></span>
+                </div>
                 <div class="tool-flex-group">
-                    <button id="flipHorizontalBtn" class="aero-btn primary">Flip Horizontal</button>
-                    <button id="flipVerticalBtn" class="aero-btn primary">Flip Vertical</button>
+                    <button id="flipHorizontalBtn" class="aero-btn primary"><i data-lucide="flip-horizontal"></i>Flip Horizontal</button>
+                    <button id="flipVerticalBtn" class="aero-btn primary"><i data-lucide="flip-vertical"></i>Flip Vertical</button>
                 </div>
             </div>
             <div class="tool-group">
-                <label>Background</label>
+                <div class="label-with-tooltip">
+                    <label>Visual Crop</label>
+                    <span class="help-icon" data-tooltip="Click 'Select Area' to draw a crop box on the preview. Drag the corners to resize and the center to move. Click 'Apply Crop' to confirm."><i data-lucide="help-circle"></i></span>
+                </div>
+                <button id="visualCropBtn" class="aero-btn primary"><i data-lucide="crop"></i>Select Area to Crop</button>
+                <div id="cropperActions" class="tool-flex-group hidden" style="margin-top: 10px;">
+                    <button id="applyCropBtn" class="aero-btn green">Apply Crop</button>
+                    <button id="cancelCropBtn" class="aero-btn red">Cancel</button>
+                </div>
+            </div>
+            <div class="tool-group">
+                <div class="label-with-tooltip">
+                    <label>Manual Crop</label>
+                    <span class="help-icon" data-tooltip="Enter precise pixel values. X/Y are the top-left corner coordinates. Width/Height are the dimensions of the crop area."><i data-lucide="help-circle"></i></span>
+                </div>
+                <div class="tool-flex-group">
+                    <input type="number" id="cropX" placeholder="X" class="form-element">
+                    <input type="number" id="cropY" placeholder="Y" class="form-element">
+                    <input type="number" id="cropWidth" placeholder="Width" class="form-element">
+                    <input type="number" id="cropHeight" placeholder="Height" class="form-element">
+                </div>
+                <button id="cropBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="crop"></i>Crop</button>
+            </div>
+            <div class="tool-group">
+                <div class="label-with-tooltip">
+                    <label>Background</label>
+                    <span class="help-icon" data-tooltip="Uses AI to automatically remove the background. Works best with images that have a clear foreground subject."><i data-lucide="eraser"></i></span>
+                </div>
                 <button id="removeBgBtn" class="aero-btn primary">Remove Background</button>
             </div>
             <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
@@ -635,16 +766,22 @@
         <button id="toggleVideoToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="scissors"></i>Video Tools</button>
         <div id="videoToolsContainer" class="tools-container hidden">
             <div class="tool-group">
-                <label>Trim</label>
+                <div class="label-with-tooltip">
+                    <label>Trim</label>
+                    <span class="help-icon" data-tooltip="Specify start and end times in HH:MM:SS format to create a shorter clip from the video."><i data-lucide="help-circle"></i></span>
+                </div>
                 <div class="tool-flex-group">
                     <input type="text" id="trimStart" placeholder="Start (e.g., 00:00:05)" class="form-element">
                     <input type="text" id="trimEnd" placeholder="End (e.g., 00:00:15)" class="form-element">
                 </div>
-                <button id="trimVideoBtn" class="aero-btn primary" style="margin-top: 10px;">Trim Video</button>
+                <button id="trimVideoBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="scissors"></i>Trim Video</button>
             </div>
             <div class="tool-group">
-                <label>Extract Audio</label>
-                <button id="extractAudioBtn" class="aero-btn primary">Extract Audio Track</button>
+                <div class="label-with-tooltip">
+                    <label>Extract Audio</label>
+                    <span class="help-icon" data-tooltip="Extracts the complete audio track from the video and converts it to an MP3 file."><i data-lucide="help-circle"></i></span>
+                </div>
+                <button id="extractAudioBtn" class="aero-btn primary"><i data-lucide="audio-lines"></i>Extract Audio Track</button>
             </div>
         </div>
     </template>
@@ -653,12 +790,15 @@
         <button id="toggleAudioToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="sliders-horizontal"></i>Audio Tools</button>
         <div id="audioToolsContainer" class="tools-container hidden">
             <div class="tool-group">
-                <label>Trim</label>
+                <div class="label-with-tooltip">
+                    <label>Trim</label>
+                    <span class="help-icon" data-tooltip="Specify start and end times in HH:MM:SS format to create a shorter clip from the audio file."><i data-lucide="help-circle"></i></span>
+                </div>
                 <div class="tool-flex-group">
                     <input type="text" id="trimAudioStart" placeholder="Start (e.g., 00:00:05)" class="form-element">
                     <input type="text" id="trimAudioEnd" placeholder="End (e.g., 00:00:15)" class="form-element">
                 </div>
-                <button id="trimAudioBtn" class="aero-btn primary" style="margin-top: 10px;">Trim Audio</button>
+                <button id="trimAudioBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="scissors"></i>Trim Audio</button>
             </div>
         </div>
     </template>
@@ -716,6 +856,7 @@
         let currentFile = null, activeTab = 'image', convertedFiles = [], batchFiles = [];
         let previewBlob = null;
         let appliedTools = [];
+        let cropper = null;
 
         const formatOptions = {
             image: ['png', 'jpeg', 'webp', 'bmp', 'gif'],
@@ -749,7 +890,7 @@ SimpleConverter is different. It leverages the power of modern web technologies 
     * **Audio**: MP3, WAV, OGG, FLAC
     * **Text**: TXT, CSV, JSON
 * **Powerful Editing Tools**:
-    * **Image**: Resize, Rotate, Flip, and AI-Powered Background Removal.
+    * **Image**: Resize, Rotate, Flip, Crop, and AI-Powered Background Removal.
     * **Video/Audio**: Trim your media files to the exact length you need.
     * **Video**: Extract the audio track from a video file.
 * **Batch Conversion**: Upload multiple files and convert them all to a single format in one go.
@@ -890,6 +1031,8 @@ SimpleConverter is different. It leverages the power of modern web technologies 
         function switchTab(tabName) {
             activeTab = tabName;
             const isBatch = tabName === 'batch';
+            
+            destroyVisualCrop();
 
             [imageTabBtn, videoTabBtn, audioTabBtn, textTabBtn, batchTabBtn].forEach(btn => btn.classList.remove('active'));
             document.getElementById(`${tabName}TabBtn`).classList.add('active');
@@ -927,8 +1070,15 @@ SimpleConverter is different. It leverages the power of modern web technologies 
                     document.getElementById('rotateBtn').addEventListener('click', (e) => handleImageTool('rotate', e));
                     document.getElementById('flipHorizontalBtn').addEventListener('click', (e) => handleImageTool('flipHorizontal', e));
                     document.getElementById('flipVerticalBtn').addEventListener('click', (e) => handleImageTool('flipVertical', e));
+                    document.getElementById('cropBtn').addEventListener('click', (e) => handleImageTool('crop', e));
                     document.getElementById('removeBgBtn').addEventListener('click', (e) => handleImageTool('removeBg', e));
                     document.getElementById('addPreviewToQueueBtn').addEventListener('click', addPreviewToQueue);
+
+                    // Visual Crop Listeners
+                    document.getElementById('visualCropBtn').addEventListener('click', startVisualCrop);
+                    document.getElementById('applyCropBtn').addEventListener('click', applyVisualCrop);
+                    document.getElementById('cancelCropBtn').addEventListener('click', destroyVisualCrop);
+
                 } else if (tabName === 'video') {
                      document.getElementById('toggleVideoToolsBtn').addEventListener('click', () => document.getElementById('videoToolsContainer').classList.toggle('hidden'));
                      document.getElementById('trimVideoBtn').addEventListener('click', (e) => handleVideoTool('trim', e));
@@ -942,6 +1092,9 @@ SimpleConverter is different. It leverages the power of modern web technologies 
 
         function handleFile(file) {
             if (!file) return;
+            
+            destroyVisualCrop();
+
             currentFile = file;
             previewBlob = file; 
             appliedTools = []; 
@@ -968,7 +1121,14 @@ SimpleConverter is different. It leverages the power of modern web technologies 
         }
         
         function updatePreview(file) {
-            [imagePreview, videoPreview, audioPreview, textPreview, noPreview].forEach(el => el.classList.add('hidden'));
+            [videoPreview, audioPreview, textPreview, noPreview].forEach(el => el.classList.add('hidden'));
+            imagePreview.classList.add('hidden');
+            
+            if (cropper) {
+                imagePreview.classList.remove('hidden');
+                return;
+            }
+
             if (!file || !previewBlob) {
                 noPreview.classList.remove('hidden');
                 return;
@@ -1050,6 +1210,7 @@ SimpleConverter is different. It leverages the power of modern web technologies 
                     case 'rotate': newBlob = await performRotation(previewBlob); appliedTools.push('rotated'); break;
                     case 'flipHorizontal': newBlob = await performFlip(previewBlob, 'horizontal'); appliedTools.push('flipped-h'); break;
                     case 'flipVertical': newBlob = await performFlip(previewBlob, 'vertical'); appliedTools.push('flipped-v'); break;
+                    case 'crop': newBlob = await performCrop(previewBlob); appliedTools.push('cropped'); break;
                 }
                 previewBlob = newBlob;
                 updatePreview(currentFile); // Pass original file to keep context, preview uses previewBlob
@@ -1253,6 +1414,88 @@ SimpleConverter is different. It leverages the power of modern web technologies 
                 };
             });
         }
+
+        function performCrop(sourceBlob) {
+            const x = parseInt(document.getElementById('cropX').value);
+            const y = parseInt(document.getElementById('cropY').value);
+            const width = parseInt(document.getElementById('cropWidth').value);
+            const height = parseInt(document.getElementById('cropHeight').value);
+
+            if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+                throw new Error('Please enter valid, positive crop dimensions.');
+            }
+
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(sourceBlob);
+                img.onload = () => {
+                    if (x < 0 || y < 0 || x + width > img.width || y + height > img.height) {
+                        return reject(new Error('Crop area is outside the image dimensions.'));
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(new Blob([blob], {type: sourceBlob.type}));
+                        } else {
+                            reject(new Error('Canvas to Blob conversion failed.'));
+                        }
+                    }, sourceBlob.type);
+                };
+                img.onerror = () => reject(new Error('Failed to load image for cropping.'));
+            });
+        }
+
+        function startVisualCrop() {
+            if (!previewBlob || !previewBlob.type.startsWith('image/')) {
+                displayMessage('Please upload an image to use the crop tool.', 'error');
+                return;
+            }
+            if (cropper) return;
+
+            cropper = new Cropper(imagePreview, {
+                viewMode: 1,
+                background: false,
+                autoCrop: true,
+                movable: true,
+                zoomable: false,
+                scalable: false,
+                rotatable: false,
+            });
+
+            document.getElementById('visualCropBtn').classList.add('hidden');
+            document.getElementById('cropperActions').classList.remove('hidden');
+        }
+
+        function applyVisualCrop() {
+            if (!cropper) return;
+            
+            const croppedCanvas = cropper.getCroppedCanvas();
+            if (!croppedCanvas) {
+                displayMessage('Could not apply crop.', 'error');
+                return;
+            }
+
+            croppedCanvas.toBlob((blob) => {
+                previewBlob = blob;
+                appliedTools.push('cropped');
+                destroyVisualCrop();
+                updatePreview(currentFile);
+                displayMessage('Crop applied. You can now add the image to the queue.', 'success');
+            }, currentFile.type);
+        }
+
+        function destroyVisualCrop() {
+            if (!cropper) return;
+            cropper.destroy();
+            cropper = null;
+            document.getElementById('visualCropBtn').classList.remove('hidden');
+            document.getElementById('cropperActions').classList.add('hidden');
+        }
+
 
         function addPreviewToQueue() {
             if (!previewBlob) { displayMessage('No preview to add.', 'error'); return; }
@@ -1573,14 +1816,16 @@ SimpleConverter is different. It leverages the power of modern web technologies 
         }
 
         // --- Initial setup ---
-        const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark mode
-        applyTheme(savedTheme);
-        lucide.createIcons();
-        switchTab('image');
-        updateBatchOptions();
-        renderDownloadList();
-        updateBatchFileList();
-        loadReadme(); // Render the README content for the modal
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark mode
+            applyTheme(savedTheme);
+            lucide.createIcons();
+            switchTab('image');
+            updateBatchOptions();
+            renderDownloadList();
+            updateBatchFileList();
+            loadReadme();
+        });
     </script>
 </body>
 </html>
