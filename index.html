@@ -756,9 +756,14 @@
                 <button id="removeBgBtn" class="aero-btn primary">Remove Background</button>
             </div>
             <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
-            <button id="addPreviewToQueueBtn" class="aero-btn green">
-                <i data-lucide="plus-circle"></i>Add Edited Image to Queue
-            </button>
+            <div class="tool-flex-group">
+                <button id="addPreviewToQueueBtn" class="aero-btn green">
+                    <i data-lucide="plus-circle"></i>Add Edited Image to Queue
+                </button>
+                <button id="resetImageEditsBtn" class="aero-btn red">
+                    <i data-lucide="rotate-ccw"></i>Reset Edits
+                </button>
+            </div>
         </div>
     </template>
     
@@ -783,6 +788,8 @@
                 </div>
                 <button id="extractAudioBtn" class="aero-btn primary"><i data-lucide="audio-lines"></i>Extract Audio Track</button>
             </div>
+            <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
+            <button id="resetVideoEditsBtn" class="aero-btn red"><i data-lucide="rotate-ccw"></i>Reset Edits</button>
         </div>
     </template>
 
@@ -800,6 +807,8 @@
                 </div>
                 <button id="trimAudioBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="scissors"></i>Trim Audio</button>
             </div>
+            <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
+            <button id="resetAudioEditsBtn" class="aero-btn red"><i data-lucide="rotate-ccw"></i>Reset Edits</button>
         </div>
     </template>
     
@@ -865,69 +874,6 @@
             text: ['txt', 'csv', 'json']
         };
         
-        // Store README content in a variable to avoid fetch errors
-        const readmeMarkdownContent = `
-# SimpleConverter - The Ultimate File Converter
-
-Thanks for checking out SimpleConverter!
-
-Tired of online converters that are slow, covered in ads, and make you jump through hoops just to download your own file? So were we.
-
-SimpleConverter is a powerful, privacy-focused, and user-friendly file conversion tool that runs entirely in your web browser. It's built on the principle that converting your files should be a simple, secure, and unrestricted process. No uploads, no queues, no nonsense.
-
-## The Philosophy
-
-This project was born out of frustration with the state of online file converters. Many services impose confusing limitations, bombard users with advertisements, and require you to upload your personal files to their servers, creating privacy concerns.
-
-SimpleConverter is different. It leverages the power of modern web technologies like WebAssembly to perform all conversions directly on your computer and hosted via Github Pages. Your files never leave your machine, guaranteeing your privacy and providing a much faster experience.
-
-## Key Features
-
-* **100% Client-Side**: All file processing happens in your browser. Your data stays private and secure.
-* **Multi-Format Support**:
-    * **Images**: PNG, JPEG, WEBP, BMP, GIF
-    * **Videos**: MP4, WEBM, MOV, AVI, MKV
-    * **Audio**: MP3, WAV, OGG, FLAC
-    * **Text**: TXT, CSV, JSON
-* **Powerful Editing Tools**:
-    * **Image**: Resize, Rotate, Flip, Crop, and AI-Powered Background Removal.
-    * **Video/Audio**: Trim your media files to the exact length you need.
-    * **Video**: Extract the audio track from a video file.
-* **Batch Conversion**: Upload multiple files and convert them all to a single format in one go.
-* **Flexible Input**: Upload files from your computer, drag-and-drop, paste images from your clipboard, or import directly from a URL.
-* **Unrestricted Downloads**: Download your converted files individually or as a convenient .zip archive instantly. No wait times, no download limits.
-* **Dual-Theme "Frutiger Aero" UI**: Enjoy a beautiful, nostalgic interface inspired by the early 2010s aesthetic, available in both light and dark modes.
-
-## Tech Stack
-
-* **Core**: HTML, CSS, and modern JavaScript (ESM)
-* **Conversion Engine**: FFmpeg.wasm for robust audio and video processing.
-* **Background Removal**: \`@imgly/background-removal\` for the AI-powered image tool.
-* **Archiving**: JSZip for creating .zip files for batch downloads.
-* **Icons**: Lucide Icons for a clean and modern icon set.
-* **Font**: Tahoma
-
-## How to Use
-
-1.  Simply open the \`index.html\` file or use [this page](https://molokrakein.github.io/SimpleConverter/) in a modern web browser like Chrome, Firefox, or Edge.
-2.  Use the top navigation to select a conversion category (Image, Video, etc.).
-3.  Upload your file(s) using the upload area, or import from a URL.
-4.  Select your desired output format.
-5.  (Optional) Use the available tools to edit your file before conversion.
-6.  Click the "Convert" button.
-7.  Your converted file will appear in the "Download Queue," where you can download it directly.
-
-## What In Progress ??
-* PDF Converter Tool sets
-* Conventional Office file format converter
-
-
-## Credits
-
-* Dark Mode Background Photo by [Vincent Botta on Unsplash](https://unsplash.com/photos/a-close-up-of-a-green-leaf-with-water-droplets-on-it-3_i2a01m2-M).
-* Application icon and UI design inspired by the Frutiger Aero aesthetic.
-`;
-
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
@@ -1073,6 +1019,7 @@ SimpleConverter is different. It leverages the power of modern web technologies 
                     document.getElementById('cropBtn').addEventListener('click', (e) => handleImageTool('crop', e));
                     document.getElementById('removeBgBtn').addEventListener('click', (e) => handleImageTool('removeBg', e));
                     document.getElementById('addPreviewToQueueBtn').addEventListener('click', addPreviewToQueue);
+                    document.getElementById('resetImageEditsBtn').addEventListener('click', resetEdits);
 
                     // Visual Crop Listeners
                     document.getElementById('visualCropBtn').addEventListener('click', startVisualCrop);
@@ -1083,9 +1030,11 @@ SimpleConverter is different. It leverages the power of modern web technologies 
                      document.getElementById('toggleVideoToolsBtn').addEventListener('click', () => document.getElementById('videoToolsContainer').classList.toggle('hidden'));
                      document.getElementById('trimVideoBtn').addEventListener('click', (e) => handleVideoTool('trim', e));
                      document.getElementById('extractAudioBtn').addEventListener('click', (e) => handleVideoTool('extractAudio', e));
+                     document.getElementById('resetVideoEditsBtn').addEventListener('click', resetEdits);
                 } else if (tabName === 'audio') {
                     document.getElementById('toggleAudioToolsBtn').addEventListener('click', () => document.getElementById('audioToolsContainer').classList.toggle('hidden'));
                     document.getElementById('trimAudioBtn').addEventListener('click', (e) => handleAudioTool('trim', e));
+                    document.getElementById('resetAudioEditsBtn').addEventListener('click', resetEdits);
                 }
             }
         }
@@ -1496,6 +1445,20 @@ SimpleConverter is different. It leverages the power of modern web technologies 
             document.getElementById('cropperActions').classList.add('hidden');
         }
 
+        function resetEdits() {
+            if (!currentFile) {
+                displayMessage('No file to reset.', 'error');
+                return;
+            }
+            
+            destroyVisualCrop();
+
+            previewBlob = currentFile;
+            appliedTools = [];
+            
+            updatePreview(currentFile);
+            displayMessage('All edits have been reset.', 'success');
+        }
 
         function addPreviewToQueue() {
             if (!previewBlob) { displayMessage('No preview to add.', 'error'); return; }
@@ -1810,9 +1773,16 @@ SimpleConverter is different. It leverages the power of modern web technologies 
         }
 
         // --- Load README for Modal ---
-        function loadReadme() {
-            // Use the 'marked' library to parse markdown from the variable into HTML
-            readmeContent.innerHTML = marked.parse(readmeMarkdownContent);
+        async function loadReadme() {
+            try {
+                const response = await fetch('README.md');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const markdown = await response.text();
+                readmeContent.innerHTML = marked.parse(markdown);
+            } catch (error) {
+                console.error("Could not load README.md:", error);
+                readmeContent.innerHTML = '<p>Error: Could not load README content.</p>';
+            }
         }
 
         // --- Initial setup ---
