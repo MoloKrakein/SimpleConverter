@@ -267,14 +267,24 @@
             display: flex; align-items: center; justify-content: center; min-height: 200px;
             background-color: var(--preview-bg); border-radius: 6px;
             border: 1px solid var(--panel-border); padding: 10px; overflow: hidden;
+            position: relative;
         }
-        #previewArea img {
-             /* This is important for cropper.js to work correctly */
+        #previewArea img, #previewArea video {
             display: block;
             max-width: 100%;
         }
         #imagePreview, #videoPreview, #audioPreview, #textPreview { max-width: 100%; max-height: 250px; }
         #noPreview { text-align: center; color: var(--font-color-subheader); }
+        #videoFrameCanvas {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            max-width: calc(100% - 20px);
+            max-height: calc(100% - 20px);
+            object-fit: contain;
+        }
 
         #downloadArea, #batchProgressArea {
             background-color: var(--preview-bg); border-radius: 6px;
@@ -313,7 +323,6 @@
         }
         .tool-group { margin-bottom: 15px; }
         .tool-group:last-child { margin-bottom: 0; }
-        .tool-group label { display: block; margin-bottom: 5px; font-weight: 700; }
         .tool-flex-group { display: flex; gap: 10px; }
 
         /* --- Tooltips --- */
@@ -608,6 +617,7 @@
                         <h2>3. Preview & Tools</h2>
                         <div id="previewArea">
                             <img id="imagePreview" class="hidden" alt="Image Preview">
+                            <canvas id="videoFrameCanvas" class="hidden"></canvas>
                             <video id="videoPreview" class="hidden" controls></video>
                             <audio id="audioPreview" class="hidden" controls></audio>
                             <pre id="textPreview" class="hidden"></pre>
@@ -783,6 +793,30 @@
             </div>
             <div class="tool-group">
                 <div class="label-with-tooltip">
+                    <label>Visual Crop</label>
+                    <span class="help-icon" data-tooltip="Click 'Select Area' to draw a crop box on a frame from the video. The selected area will be applied to the entire video."><i data-lucide="help-circle"></i></span>
+                </div>
+                <button id="visualVideoCropBtn" class="aero-btn primary"><i data-lucide="crop"></i>Select Area to Crop</button>
+                <div id="videoCropperActions" class="tool-flex-group hidden" style="margin-top: 10px;">
+                    <button id="applyVideoCropBtn" class="aero-btn green">Apply Crop</button>
+                    <button id="cancelVideoCropBtn" class="aero-btn red">Cancel</button>
+                </div>
+            </div>
+            <div class="tool-group">
+                <div class="label-with-tooltip">
+                    <label>Manual Crop</label>
+                    <span class="help-icon" data-tooltip="Enter precise pixel values for the crop area. This will be applied to the entire video."><i data-lucide="help-circle"></i></span>
+                </div>
+                <div class="tool-flex-group">
+                    <input type="number" id="videoCropX" placeholder="X" class="form-element">
+                    <input type="number" id="videoCropY" placeholder="Y" class="form-element">
+                    <input type="number" id="videoCropWidth" placeholder="Width" class="form-element">
+                    <input type="number" id="videoCropHeight" placeholder="Height" class="form-element">
+                </div>
+                <button id="videoCropBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="crop"></i>Crop Video</button>
+            </div>
+            <div class="tool-group">
+                <div class="label-with-tooltip">
                     <label>Extract Audio</label>
                     <span class="help-icon" data-tooltip="Extracts the complete audio track from the video and converts it to an MP3 file."><i data-lucide="help-circle"></i></span>
                 </div>
@@ -841,6 +875,7 @@
         const imageConverterTab = document.getElementById('imageConverterTab'), videoConverterTab = document.getElementById('videoConverterTab'), audioConverterTab = document.getElementById('audioConverterTab'), textConverterTab = document.getElementById('textConverterTab'), batchConverterTab = document.getElementById('batchConverterTab');
         const imageConvertBtn = document.getElementById('imageConvertBtn'), videoConvertBtn = document.getElementById('videoConvertBtn'), audioConvertBtn = document.getElementById('audioConvertBtn'), textConvertBtn = document.getElementById('textConvertBtn');
         const previewArea = document.getElementById('previewArea'), imagePreview = document.getElementById('imagePreview'), videoPreview = document.getElementById('videoPreview'), audioPreview = document.getElementById('audioPreview'), textPreview = document.getElementById('textPreview'), noPreview = document.getElementById('noPreview');
+        const videoFrameCanvas = document.getElementById('videoFrameCanvas');
         const downloadList = document.getElementById('downloadList'), downloadAllBtn = document.getElementById('downloadAllBtn'), clearListBtn = document.getElementById('clearListBtn'), downloadListEmpty = document.getElementById('downloadListEmpty');
         const singleFileConverter = document.getElementById('singleFileConverter');
         const toolsSection = document.getElementById('toolsSection');
@@ -1031,6 +1066,13 @@
                      document.getElementById('trimVideoBtn').addEventListener('click', (e) => handleVideoTool('trim', e));
                      document.getElementById('extractAudioBtn').addEventListener('click', (e) => handleVideoTool('extractAudio', e));
                      document.getElementById('resetVideoEditsBtn').addEventListener('click', resetEdits);
+                     document.getElementById('videoCropBtn').addEventListener('click', (e) => handleVideoTool('crop', e));
+
+                     // Visual Crop Listeners
+                    document.getElementById('visualVideoCropBtn').addEventListener('click', startVisualVideoCrop);
+                    document.getElementById('applyVideoCropBtn').addEventListener('click', (e) => applyVisualVideoCrop(e));
+                    document.getElementById('cancelVideoCropBtn').addEventListener('click', destroyVisualCrop);
+
                 } else if (tabName === 'audio') {
                     document.getElementById('toggleAudioToolsBtn').addEventListener('click', () => document.getElementById('audioToolsContainer').classList.toggle('hidden'));
                     document.getElementById('trimAudioBtn').addEventListener('click', (e) => handleAudioTool('trim', e));
@@ -1070,11 +1112,12 @@
         }
         
         function updatePreview(file) {
-            [videoPreview, audioPreview, textPreview, noPreview].forEach(el => el.classList.add('hidden'));
+            [videoPreview, audioPreview, textPreview, noPreview, videoFrameCanvas].forEach(el => el.classList.add('hidden'));
             imagePreview.classList.add('hidden');
             
             if (cropper) {
-                imagePreview.classList.remove('hidden');
+                if(activeTab === 'image') imagePreview.classList.remove('hidden');
+                if(activeTab === 'video') videoFrameCanvas.classList.remove('hidden');
                 return;
             }
 
@@ -1183,6 +1226,7 @@
                 switch(tool) {
                     case 'trim': await performVideoTrim(); break;
                     case 'extractAudio': await performVideoExtractAudio(); break;
+                    case 'crop': await performVideoCrop(); break;
                 }
             } catch (error) {
                  console.error(`${tool} Error:`, error); 
@@ -1243,7 +1287,7 @@
             }
         }
 
-        async function performFFmpegOperation(args, outputFilename, outputType) {
+        async function performFFmpegOperation(args, outputFilename, outputType, resultSuffix = '_converted') {
             displayMessage('Loading media engine...', 'info');
             if (!ffmpeg.isLoaded()) await ffmpeg.load();
             displayMessage('Processing...', 'info');
@@ -1252,7 +1296,7 @@
             await ffmpeg.run(...args);
             const data = ffmpeg.FS('readFile', outputFilename);
             const blob = new Blob([data.buffer], { type: outputType });
-            addFileToDownloadList(blob, outputFilename.split('.').pop(), `_converted`);
+            addFileToDownloadList(blob, outputFilename.split('.').pop(), resultSuffix);
             displayMessage('Operation successful.', 'success');
             ffmpeg.FS('unlink', inputFilename);
             ffmpeg.FS('unlink', outputFilename);
@@ -1263,7 +1307,24 @@
             const end = document.getElementById('trimEnd').value;
             if (!start || !end) throw new Error('Start and End times are required.');
             const outputFilename = `output.${currentFile.name.split('.').pop()}`;
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-ss', start, '-to', end, '-c', 'copy', outputFilename], outputFilename, currentFile.type);
+            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-ss', start, '-to', end, '-c', 'copy', outputFilename], outputFilename, currentFile.type, '_trimmed');
+        }
+
+        async function performVideoCrop() {
+            const x = parseInt(document.getElementById('videoCropX').value);
+            const y = parseInt(document.getElementById('videoCropY').value);
+            const width = parseInt(document.getElementById('videoCropWidth').value);
+            const height = parseInt(document.getElementById('videoCropHeight').value);
+
+            if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+                throw new Error('Please enter valid, positive crop dimensions.');
+            }
+            
+            const toFormat = document.querySelector('#videoConverterTab .to-format').value;
+            const outputFilename = `output.${toFormat}`;
+            const filter = `crop=${width}:${height}:${x}:${y}`;
+
+            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-filter:v', filter, '-c:a', 'copy', outputFilename], outputFilename, `video/${toFormat}`, '_cropped');
         }
 
         async function performAudioTrim() {
@@ -1271,12 +1332,12 @@
             const end = document.getElementById('trimAudioEnd').value;
             if (!start || !end) throw new Error('Start and End times are required.');
             const outputFilename = `output.${currentFile.name.split('.').pop()}`;
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-ss', start, '-to', end, '-c', 'copy', outputFilename], outputFilename, currentFile.type);
+            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-ss', start, '-to', end, '-c', 'copy', outputFilename], outputFilename, currentFile.type, '_trimmed');
         }
 
          async function performVideoExtractAudio() {
             const outputFilename = 'output.mp3';
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-vn', '-acodec', 'libmp3lame', outputFilename], outputFilename, 'audio/mpeg');
+            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-vn', '-acodec', 'libmp3lame', outputFilename], outputFilename, 'audio/mpeg', '_audio_extracted');
         }
 
         async function performImageConversion(to) {
@@ -1437,12 +1498,80 @@
             }, currentFile.type);
         }
 
+        function startVisualVideoCrop() {
+            if (!currentFile || !currentFile.type.startsWith('video/')) {
+                displayMessage('Please upload a video to use the crop tool.', 'error');
+                return;
+            }
+            if (cropper) return;
+
+            videoPreview.classList.add('hidden');
+            videoFrameCanvas.classList.remove('hidden');
+
+            const ctx = videoFrameCanvas.getContext('2d');
+            videoFrameCanvas.width = videoPreview.videoWidth;
+            videoFrameCanvas.height = videoPreview.videoHeight;
+            ctx.drawImage(videoPreview, 0, 0, videoFrameCanvas.width, videoFrameCanvas.height);
+
+            cropper = new Cropper(videoFrameCanvas, {
+                viewMode: 1,
+                background: false,
+                autoCrop: true,
+                movable: true,
+                zoomable: false,
+                scalable: false,
+                rotatable: false,
+            });
+
+            document.getElementById('visualVideoCropBtn').classList.add('hidden');
+            document.getElementById('videoCropperActions').classList.remove('hidden');
+        }
+
+        async function applyVisualVideoCrop(event) {
+            if (!cropper || !currentFile) {
+                displayMessage('No active crop session or file.', 'error');
+                return;
+            }
+            const buttonEl = event.target.closest('.aero-btn');
+            setLoading(buttonEl, true);
+
+            try {
+                const data = cropper.getData(true);
+                const toFormat = document.querySelector('#videoConverterTab .to-format').value || 'mp4';
+                const outputFilename = `output.${toFormat}`;
+                const filter = `crop=${data.width}:${data.height}:${data.x}:${data.y}`;
+                
+                // Use the generic ffmpeg operation function, copying audio to speed up the process
+                await performFFmpegOperation(
+                    ['-i', `input.${currentFile.name.split('.').pop()}`, '-filter:v', filter, '-c:a', 'copy', outputFilename],
+                    outputFilename,
+                    `video/${toFormat}`,
+                    '_cropped'
+                );
+                displayMessage('Video successfully cropped and added to queue.', 'success');
+            } catch (error) {
+                console.error('Visual Video Crop Error:', error);
+                displayMessage(`An error occurred during crop: ${error.message}`, 'error');
+            } finally {
+                setLoading(buttonEl, false);
+                destroyVisualCrop(); // Clean up the cropper UI
+            }
+        }
+
         function destroyVisualCrop() {
             if (!cropper) return;
             cropper.destroy();
             cropper = null;
-            document.getElementById('visualCropBtn').classList.remove('hidden');
-            document.getElementById('cropperActions').classList.add('hidden');
+
+            if(activeTab === 'image') {
+                document.getElementById('visualCropBtn').classList.remove('hidden');
+                document.getElementById('cropperActions').classList.add('hidden');
+            } else if (activeTab === 'video') {
+                videoFrameCanvas.classList.add('hidden');
+                videoPreview.classList.remove('hidden');
+                document.getElementById('visualVideoCropBtn').classList.remove('hidden');
+                document.getElementById('videoCropperActions').classList.add('hidden');
+            }
         }
 
         function resetEdits() {
@@ -1455,6 +1584,14 @@
 
             previewBlob = currentFile;
             appliedTools = [];
+
+            if (activeTab === 'video') {
+                const fields = ['videoCropX', 'videoCropY', 'videoCropWidth', 'videoCropHeight', 'trimStart', 'trimEnd'];
+                fields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            }
             
             updatePreview(currentFile);
             displayMessage('All edits have been reset.', 'success');
