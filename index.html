@@ -9,7 +9,6 @@
     <!-- Third-party libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- For Markdown Parsing -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -269,22 +268,12 @@
             border: 1px solid var(--panel-border); padding: 10px; overflow: hidden;
             position: relative;
         }
-        #previewArea img, #previewArea video {
+        #previewArea img {
             display: block;
             max-width: 100%;
         }
-        #imagePreview, #videoPreview, #audioPreview, #textPreview { max-width: 100%; max-height: 250px; }
+        #imagePreview, #textPreview { max-width: 100%; max-height: 250px; }
         #noPreview { text-align: center; color: var(--font-color-subheader); }
-        #videoFrameCanvas {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            max-width: calc(100% - 20px);
-            max-height: calc(100% - 20px);
-            object-fit: contain;
-        }
 
         #downloadArea, #batchProgressArea {
             background-color: var(--preview-bg); border-radius: 6px;
@@ -560,8 +549,6 @@
 
         <nav class="tab-nav">
             <button id="imageTabBtn" class="tab-btn active"><i data-lucide="image"></i>Image</button>
-            <button id="videoTabBtn" class="tab-btn"><i data-lucide="film"></i>Video</button>
-            <button id="audioTabBtn" class="tab-btn"><i data-lucide="music"></i>Audio</button>
             <button id="textTabBtn" class="tab-btn"><i data-lucide="file-text"></i>Text</button>
             <button id="batchTabBtn" class="tab-btn"><i data-lucide="files"></i>Batch</button>
         </nav>
@@ -591,18 +578,8 @@
                         <h2>2. Conversion Options</h2>
                         <div id="imageConverterTab" class="tab-content active">
                             <div class="form-group"><label for="imageFromFormat">From</label><select id="imageFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
-                            <div class="form-group"><label for="imageToFormat">To</label><select id="imageToFormat" class="form-element to-format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
+                            <div class="form-group"><label for="imageToFormat">To</label><select id="imageToFormat" class="form-element to-format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option><option value="ico">ICO</option></select></div>
                             <button id="imageConvertBtn" class="aero-btn green">Convert Image</button>
-                        </div>
-                        <div id="videoConverterTab" class="tab-content">
-                           <div class="form-group"><label for="videoFromFormat">From</label><select id="videoFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="avi">AVI</option><option value="mkv">MKV</option></select></div>
-                           <div class="form-group"><label for="videoToFormat">To</label><select id="videoToFormat" class="form-element to-format"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="avi">AVI</option><option value="mkv">MKV</option></select></div>
-                           <button id="videoConvertBtn" class="aero-btn green">Convert Video</button>
-                        </div>
-                        <div id="audioConverterTab" class="tab-content">
-                            <div class="form-group"><label for="audioFromFormat">From</label><select id="audioFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="flac">FLAC</option></select></div>
-                            <div class="form-group"><label for="audioToFormat">To</label><select id="audioToFormat" class="form-element to-format"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="flac">FLAC</option></select></div>
-                            <button id="audioConvertBtn" class="aero-btn green">Convert Audio</button>
                         </div>
                         <div id="textConverterTab" class="tab-content">
                            <div class="form-group"><label for="textFromFormat">From</label><select id="textFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="txt">TXT</option><option value="csv">CSV</option><option value="json">JSON</option></select></div>
@@ -617,9 +594,6 @@
                         <h2>3. Preview & Tools</h2>
                         <div id="previewArea">
                             <img id="imagePreview" class="hidden" alt="Image Preview">
-                            <canvas id="videoFrameCanvas" class="hidden"></canvas>
-                            <video id="videoPreview" class="hidden" controls></video>
-                            <audio id="audioPreview" class="hidden" controls></audio>
                             <pre id="textPreview" class="hidden"></pre>
                             <div id="noPreview">
                                 <i data-lucide="eye" style="width: 40px; height: 40px;"></i>
@@ -655,8 +629,6 @@
                         <div class="form-group">
                             <select id="batchCategory" class="form-element">
                                 <option value="image">Image</option>
-                                <option value="video">Video</option>
-                                <option value="audio">Audio</option>
                                 <option value="text">Text</option>
                             </select>
                         </div>
@@ -777,75 +749,6 @@
         </div>
     </template>
     
-    <template id="videoToolsTemplate">
-        <button id="toggleVideoToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="scissors"></i>Video Tools</button>
-        <div id="videoToolsContainer" class="tools-container hidden">
-            <div class="tool-group">
-                <div class="label-with-tooltip">
-                    <label>Trim</label>
-                    <span class="help-icon" data-tooltip="Specify start and end times in HH:MM:SS format to create a shorter clip from the video."><i data-lucide="help-circle"></i></span>
-                </div>
-                <div class="tool-flex-group">
-                    <input type="text" id="trimStart" placeholder="Start (e.g., 00:00:05)" class="form-element">
-                    <input type="text" id="trimEnd" placeholder="End (e.g., 00:00:15)" class="form-element">
-                </div>
-                <button id="trimVideoBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="scissors"></i>Trim Video</button>
-            </div>
-            <div class="tool-group">
-                <div class="label-with-tooltip">
-                    <label>Visual Crop</label>
-                    <span class="help-icon" data-tooltip="Click 'Select Area' to draw a crop box on a frame from the video. The selected area will be applied to the entire video."><i data-lucide="help-circle"></i></span>
-                </div>
-                <button id="visualVideoCropBtn" class="aero-btn primary"><i data-lucide="crop"></i>Select Area to Crop</button>
-                <div id="videoCropperActions" class="tool-flex-group hidden" style="margin-top: 10px;">
-                    <button id="applyVideoCropBtn" class="aero-btn green">Apply Crop</button>
-                    <button id="cancelVideoCropBtn" class="aero-btn red">Cancel</button>
-                </div>
-            </div>
-            <div class="tool-group">
-                <div class="label-with-tooltip">
-                    <label>Manual Crop</label>
-                    <span class="help-icon" data-tooltip="Enter precise pixel values for the crop area. This will be applied to the entire video."><i data-lucide="help-circle"></i></span>
-                </div>
-                <div class="tool-flex-group">
-                    <input type="number" id="videoCropX" placeholder="X" class="form-element">
-                    <input type="number" id="videoCropY" placeholder="Y" class="form-element">
-                    <input type="number" id="videoCropWidth" placeholder="Width" class="form-element">
-                    <input type="number" id="videoCropHeight" placeholder="Height" class="form-element">
-                </div>
-                <button id="videoCropBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="crop"></i>Crop Video</button>
-            </div>
-            <div class="tool-group">
-                <div class="label-with-tooltip">
-                    <label>Extract Audio</label>
-                    <span class="help-icon" data-tooltip="Extracts the complete audio track from the video and converts it to an MP3 file."><i data-lucide="help-circle"></i></span>
-                </div>
-                <button id="extractAudioBtn" class="aero-btn primary"><i data-lucide="audio-lines"></i>Extract Audio Track</button>
-            </div>
-            <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
-            <button id="resetVideoEditsBtn" class="aero-btn red"><i data-lucide="rotate-ccw"></i>Reset Edits</button>
-        </div>
-    </template>
-
-    <template id="audioToolsTemplate">
-        <button id="toggleAudioToolsBtn" class="aero-btn primary" style="margin-top: 15px;"><i data-lucide="sliders-horizontal"></i>Audio Tools</button>
-        <div id="audioToolsContainer" class="tools-container hidden">
-            <div class="tool-group">
-                <div class="label-with-tooltip">
-                    <label>Trim</label>
-                    <span class="help-icon" data-tooltip="Specify start and end times in HH:MM:SS format to create a shorter clip from the audio file."><i data-lucide="help-circle"></i></span>
-                </div>
-                <div class="tool-flex-group">
-                    <input type="text" id="trimAudioStart" placeholder="Start (e.g., 00:00:05)" class="form-element">
-                    <input type="text" id="trimAudioEnd" placeholder="End (e.g., 00:00:15)" class="form-element">
-                </div>
-                <button id="trimAudioBtn" class="aero-btn primary" style="margin-top: 10px;"><i data-lucide="scissors"></i>Trim Audio</button>
-            </div>
-            <hr style="border: none; border-top: 1px solid var(--interactive-border); margin: 15px 0;">
-            <button id="resetAudioEditsBtn" class="aero-btn red"><i data-lucide="rotate-ccw"></i>Reset Edits</button>
-        </div>
-    </template>
-    
     <!-- Info Modal -->
     <div id="infoModal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -862,20 +765,13 @@
     <div id="bg-credit">Photo by Vincent Botta on Unsplash</div>
 
     <script type="module">
-        const { createFFmpeg, fetchFile } = FFmpeg;
-        const ffmpeg = createFFmpeg({ 
-            log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
-        });
-
         // --- DOM Element References ---
         const fileInput = document.getElementById('fileInput'), dropZone = document.getElementById('dropZone'), fullPageDropZone = document.getElementById('fullPageDropZone');
         const fileNameDisplay = document.getElementById('fileName'), messageArea = document.getElementById('messageArea');
-        const imageTabBtn = document.getElementById('imageTabBtn'), videoTabBtn = document.getElementById('videoTabBtn'), audioTabBtn = document.getElementById('audioTabBtn'), textTabBtn = document.getElementById('textTabBtn'), batchTabBtn = document.getElementById('batchTabBtn');
-        const imageConverterTab = document.getElementById('imageConverterTab'), videoConverterTab = document.getElementById('videoConverterTab'), audioConverterTab = document.getElementById('audioConverterTab'), textConverterTab = document.getElementById('textConverterTab'), batchConverterTab = document.getElementById('batchConverterTab');
-        const imageConvertBtn = document.getElementById('imageConvertBtn'), videoConvertBtn = document.getElementById('videoConvertBtn'), audioConvertBtn = document.getElementById('audioConvertBtn'), textConvertBtn = document.getElementById('textConvertBtn');
-        const previewArea = document.getElementById('previewArea'), imagePreview = document.getElementById('imagePreview'), videoPreview = document.getElementById('videoPreview'), audioPreview = document.getElementById('audioPreview'), textPreview = document.getElementById('textPreview'), noPreview = document.getElementById('noPreview');
-        const videoFrameCanvas = document.getElementById('videoFrameCanvas');
+        const imageTabBtn = document.getElementById('imageTabBtn'), textTabBtn = document.getElementById('textTabBtn'), batchTabBtn = document.getElementById('batchTabBtn');
+        const imageConverterTab = document.getElementById('imageConverterTab'), textConverterTab = document.getElementById('textConverterTab'), batchConverterTab = document.getElementById('batchConverterTab');
+        const imageConvertBtn = document.getElementById('imageConvertBtn'), textConvertBtn = document.getElementById('textConvertBtn');
+        const previewArea = document.getElementById('previewArea'), imagePreview = document.getElementById('imagePreview'), textPreview = document.getElementById('textPreview'), noPreview = document.getElementById('noPreview');
         const downloadList = document.getElementById('downloadList'), downloadAllBtn = document.getElementById('downloadAllBtn'), clearListBtn = document.getElementById('clearListBtn'), downloadListEmpty = document.getElementById('downloadListEmpty');
         const singleFileConverter = document.getElementById('singleFileConverter');
         const toolsSection = document.getElementById('toolsSection');
@@ -903,9 +799,7 @@
         let cropper = null;
 
         const formatOptions = {
-            image: ['png', 'jpeg', 'webp', 'bmp', 'gif'],
-            video: ['mp4', 'webm', 'mov', 'avi', 'mkv'],
-            audio: ['mp3', 'wav', 'ogg', 'flac'],
+            image: ['png', 'jpeg', 'webp', 'bmp', 'gif', 'ico'],
             text: ['txt', 'csv', 'json']
         };
         
@@ -913,14 +807,10 @@
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
         imageTabBtn.addEventListener('click', () => switchTab('image'));
-        videoTabBtn.addEventListener('click', () => switchTab('video'));
-        audioTabBtn.addEventListener('click', () => switchTab('audio'));
         textTabBtn.addEventListener('click', () => switchTab('text'));
         batchTabBtn.addEventListener('click', () => switchTab('batch'));
-        imageConvertBtn.addEventListener('click', (e) => handleImageConversion('convert', e));
-        videoConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
-        audioConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
-        textConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
+        imageConvertBtn.addEventListener('click', (e) => handleImageConversion(e));
+        textConvertBtn.addEventListener('click', (e) => handleTextConversion(e));
         urlBtn.addEventListener('click', (e) => handleUrlImport(e));
         themeToggleBtn.addEventListener('click', toggleTheme);
         
@@ -957,17 +847,6 @@
             const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
             applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
         }
-
-        // --- FFmpeg Progress ---
-        ffmpeg.setLogger(({ type, message }) => {
-            if (type === 'fferr') {
-                 const progressMatch = message.match(/time=(\d{2}):(\d{2}):(\d{2})\.(\d{2})/);
-                 if(progressMatch) {
-                    displayMessage(`Working... ${progressMatch[0]}`, 'info');
-                 }
-            }
-        });
-
 
         // --- Full Page Drag and Drop Logic ---
         let dragCounter = 0;
@@ -1015,10 +894,10 @@
             
             destroyVisualCrop();
 
-            [imageTabBtn, videoTabBtn, audioTabBtn, textTabBtn, batchTabBtn].forEach(btn => btn.classList.remove('active'));
+            [imageTabBtn, textTabBtn, batchTabBtn].forEach(btn => btn.classList.remove('active'));
             document.getElementById(`${tabName}TabBtn`).classList.add('active');
             
-            [imageConverterTab, videoConverterTab, audioConverterTab, textConverterTab].forEach(tab => tab.classList.remove('active'));
+            [imageConverterTab, textConverterTab].forEach(tab => tab.classList.remove('active'));
             
             batchConverterTab.style.display = isBatch ? 'block' : 'none';
             singleFileConverter.style.display = isBatch ? 'none' : 'block';
@@ -1036,8 +915,6 @@
             let templateId;
 
             if (tabName === 'image') templateId = 'imageToolsTemplate';
-            else if (tabName === 'video') templateId = 'videoToolsTemplate';
-            else if (tabName === 'audio') templateId = 'audioToolsTemplate';
             else return;
 
             const template = document.getElementById(templateId);
@@ -1060,23 +937,6 @@
                     document.getElementById('visualCropBtn').addEventListener('click', startVisualCrop);
                     document.getElementById('applyCropBtn').addEventListener('click', applyVisualCrop);
                     document.getElementById('cancelCropBtn').addEventListener('click', destroyVisualCrop);
-
-                } else if (tabName === 'video') {
-                     document.getElementById('toggleVideoToolsBtn').addEventListener('click', () => document.getElementById('videoToolsContainer').classList.toggle('hidden'));
-                     document.getElementById('trimVideoBtn').addEventListener('click', (e) => handleVideoTool('trim', e));
-                     document.getElementById('extractAudioBtn').addEventListener('click', (e) => handleVideoTool('extractAudio', e));
-                     document.getElementById('resetVideoEditsBtn').addEventListener('click', resetEdits);
-                     document.getElementById('videoCropBtn').addEventListener('click', (e) => handleVideoTool('crop', e));
-
-                     // Visual Crop Listeners
-                    document.getElementById('visualVideoCropBtn').addEventListener('click', startVisualVideoCrop);
-                    document.getElementById('applyVideoCropBtn').addEventListener('click', (e) => applyVisualVideoCrop(e));
-                    document.getElementById('cancelVideoCropBtn').addEventListener('click', destroyVisualCrop);
-
-                } else if (tabName === 'audio') {
-                    document.getElementById('toggleAudioToolsBtn').addEventListener('click', () => document.getElementById('audioToolsContainer').classList.toggle('hidden'));
-                    document.getElementById('trimAudioBtn').addEventListener('click', (e) => handleAudioTool('trim', e));
-                    document.getElementById('resetAudioEditsBtn').addEventListener('click', resetEdits);
                 }
             }
         }
@@ -1092,15 +952,11 @@
             fileNameDisplay.textContent = file.name;
             
             const fileExt = file.name.split('.').pop().toLowerCase();
-            const imageFormats = ['png', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'];
-            const videoFormats = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
-            const audioFormats = ['mp3', 'wav', 'ogg', 'flac', 'm4a'];
+            const imageFormats = ['png', 'jpeg', 'jpg', 'webp', 'bmp', 'gif', 'ico'];
             const textFormats = ['txt', 'csv', 'json'];
 
             let detectedTab = null;
             if (imageFormats.includes(fileExt)) detectedTab = 'image';
-            else if (videoFormats.includes(fileExt)) detectedTab = 'video';
-            else if (audioFormats.includes(fileExt)) detectedTab = 'audio';
             else if (textFormats.includes(fileExt)) detectedTab = 'text';
 
             if (detectedTab && activeTab !== detectedTab) {
@@ -1112,12 +968,11 @@
         }
         
         function updatePreview(file) {
-            [videoPreview, audioPreview, textPreview, noPreview, videoFrameCanvas].forEach(el => el.classList.add('hidden'));
+            [textPreview, noPreview].forEach(el => el.classList.add('hidden'));
             imagePreview.classList.add('hidden');
             
             if (cropper) {
                 if(activeTab === 'image') imagePreview.classList.remove('hidden');
-                if(activeTab === 'video') videoFrameCanvas.classList.remove('hidden');
                 return;
             }
 
@@ -1131,12 +986,6 @@
             if (previewBlob.type.startsWith('image/') && activeTab === 'image') {
                 imagePreview.src = url;
                 imagePreview.classList.remove('hidden');
-            } else if (file.type.startsWith('video/') && activeTab === 'video') {
-                videoPreview.src = url;
-                videoPreview.classList.remove('hidden');
-            } else if (file.type.startsWith('audio/') && activeTab === 'audio') {
-                audioPreview.src = url;
-                audioPreview.classList.remove('hidden');
             } else if ((file.type.startsWith('text/') || file.type.includes('json')) && activeTab === 'text') {
                  file.text().then(content => {
                      textPreview.textContent = content;
@@ -1147,40 +996,38 @@
             }
         }
 
-        async function handleConversion(action, event) {
+        async function handleTextConversion(event) {
             if (!currentFile) { displayMessage('Please select a file first!', 'error'); return; }
             
             const buttonEl = event.target.closest('.aero-btn');
-            const fromFormatEl = document.querySelector(`#${activeTab}ConverterTab .from-format`);
-            const toFormatEl = document.querySelector(`#${activeTab}ConverterTab .to-format`);
+            const fromFormatEl = document.querySelector(`#textConverterTab .from-format`);
+            const toFormatEl = document.querySelector(`#textConverterTab .to-format`);
             
             let fromFormat = fromFormatEl.value;
             if (fromFormat === 'auto') fromFormat = currentFile.name.split('.').pop().toLowerCase();
 
             setLoading(buttonEl, true);
             try {
-                if (activeTab === 'audio') await performAudioConversion(fromFormat, toFormatEl.value);
-                else if (activeTab === 'video') await performVideoConversion(fromFormat, toFormatEl.value);
-                else if (activeTab === 'text') await performTextConversion(fromFormat, toFormatEl.value);
+                await performTextConversion(fromFormat, toFormatEl.value);
             } catch (error) { 
-                console.error('Action Error:', error); 
+                console.error('Text Conversion Error:', error); 
                 displayMessage(`An error occurred: ${error.message}`, 'error');
             } finally { 
                 setLoading(buttonEl, false); 
             }
         }
 
-        async function handleImageConversion(action, event) {
+        async function handleImageConversion(event) {
              if (!currentFile) { displayMessage('Please select a file first!', 'error'); return; }
             
             const buttonEl = event.target.closest('.aero-btn');
-            const toFormatEl = document.querySelector(`#${activeTab}ConverterTab .to-format`);
+            const toFormatEl = document.querySelector(`#imageConverterTab .to-format`);
             
             setLoading(buttonEl, true);
             try {
                  await performImageConversion(toFormatEl.value);
             } catch (error) { 
-                console.error('Action Error:', error); 
+                console.error('Image Conversion Error:', error); 
                 displayMessage(`An error occurred: ${error.message}`, 'error');
             } finally { 
                 setLoading(buttonEl, false); 
@@ -1207,44 +1054,6 @@
                 previewBlob = newBlob;
                 updatePreview(currentFile); // Pass original file to keep context, preview uses previewBlob
                 displayMessage(`Applied ${tool}. Edit the preview or add to queue.`, 'success');
-            } catch (error) {
-                 console.error(`${tool} Error:`, error); 
-                 displayMessage(`An error occurred: ${error.message}`, 'error');
-            } finally {
-                setLoading(buttonEl, false);
-            }
-        }
-
-        async function handleVideoTool(tool, event) {
-             if (!currentFile || !currentFile.type.startsWith('video/')) {
-                displayMessage('Please select a video file first!', 'error');
-                return;
-            }
-            const buttonEl = event.target.closest('.aero-btn');
-            setLoading(buttonEl, true);
-            try {
-                switch(tool) {
-                    case 'trim': await performVideoTrim(); break;
-                    case 'extractAudio': await performVideoExtractAudio(); break;
-                    case 'crop': await performVideoCrop(); break;
-                }
-            } catch (error) {
-                 console.error(`${tool} Error:`, error); 
-                 displayMessage(`An error occurred: ${error.message}`, 'error');
-            } finally {
-                setLoading(buttonEl, false);
-            }
-        }
-        
-        async function handleAudioTool(tool, event) {
-             if (!currentFile || !currentFile.type.startsWith('audio/')) {
-                displayMessage('Please select an audio file first!', 'error');
-                return;
-            }
-            const buttonEl = event.target.closest('.aero-btn');
-            setLoading(buttonEl, true);
-            try {
-                if (tool === 'trim') await performAudioTrim();
             } catch (error) {
                  console.error(`${tool} Error:`, error); 
                  displayMessage(`An error occurred: ${error.message}`, 'error');
@@ -1285,59 +1094,6 @@
             } finally {
                 setLoading(buttonEl, false);
             }
-        }
-
-        async function performFFmpegOperation(args, outputFilename, outputType, resultSuffix = '_converted') {
-            displayMessage('Loading media engine...', 'info');
-            if (!ffmpeg.isLoaded()) await ffmpeg.load();
-            displayMessage('Processing...', 'info');
-            const inputFilename = `input.${currentFile.name.split('.').pop()}`;
-            ffmpeg.FS('writeFile', inputFilename, await fetchFile(currentFile));
-            await ffmpeg.run(...args);
-            const data = ffmpeg.FS('readFile', outputFilename);
-            const blob = new Blob([data.buffer], { type: outputType });
-            addFileToDownloadList(blob, outputFilename.split('.').pop(), resultSuffix);
-            displayMessage('Operation successful.', 'success');
-            ffmpeg.FS('unlink', inputFilename);
-            ffmpeg.FS('unlink', outputFilename);
-        }
-
-        async function performVideoTrim() {
-            const start = document.getElementById('trimStart').value;
-            const end = document.getElementById('trimEnd').value;
-            if (!start || !end) throw new Error('Start and End times are required.');
-            const outputFilename = `output.${currentFile.name.split('.').pop()}`;
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-ss', start, '-to', end, '-c', 'copy', outputFilename], outputFilename, currentFile.type, '_trimmed');
-        }
-
-        async function performVideoCrop() {
-            const x = parseInt(document.getElementById('videoCropX').value);
-            const y = parseInt(document.getElementById('videoCropY').value);
-            const width = parseInt(document.getElementById('videoCropWidth').value);
-            const height = parseInt(document.getElementById('videoCropHeight').value);
-
-            if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
-                throw new Error('Please enter valid, positive crop dimensions.');
-            }
-            
-            const toFormat = document.querySelector('#videoConverterTab .to-format').value;
-            const outputFilename = `output.${toFormat}`;
-            const filter = `crop=${width}:${height}:${x}:${y}`;
-
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-filter:v', filter, '-c:a', 'copy', outputFilename], outputFilename, `video/${toFormat}`, '_cropped');
-        }
-
-        async function performAudioTrim() {
-            const start = document.getElementById('trimAudioStart').value;
-            const end = document.getElementById('trimAudioEnd').value;
-            if (!start || !end) throw new Error('Start and End times are required.');
-            const outputFilename = `output.${currentFile.name.split('.').pop()}`;
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-ss', start, '-to', end, '-c', 'copy', outputFilename], outputFilename, currentFile.type, '_trimmed');
-        }
-
-         async function performVideoExtractAudio() {
-            const outputFilename = 'output.mp3';
-            await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-vn', '-acodec', 'libmp3lame', outputFilename], outputFilename, 'audio/mpeg', '_audio_extracted');
         }
 
         async function performImageConversion(to) {
@@ -1498,66 +1254,6 @@
             }, currentFile.type);
         }
 
-        function startVisualVideoCrop() {
-            if (!currentFile || !currentFile.type.startsWith('video/')) {
-                displayMessage('Please upload a video to use the crop tool.', 'error');
-                return;
-            }
-            if (cropper) return;
-
-            videoPreview.classList.add('hidden');
-            videoFrameCanvas.classList.remove('hidden');
-
-            const ctx = videoFrameCanvas.getContext('2d');
-            videoFrameCanvas.width = videoPreview.videoWidth;
-            videoFrameCanvas.height = videoPreview.videoHeight;
-            ctx.drawImage(videoPreview, 0, 0, videoFrameCanvas.width, videoFrameCanvas.height);
-
-            cropper = new Cropper(videoFrameCanvas, {
-                viewMode: 1,
-                background: false,
-                autoCrop: true,
-                movable: true,
-                zoomable: false,
-                scalable: false,
-                rotatable: false,
-            });
-
-            document.getElementById('visualVideoCropBtn').classList.add('hidden');
-            document.getElementById('videoCropperActions').classList.remove('hidden');
-        }
-
-        async function applyVisualVideoCrop(event) {
-            if (!cropper || !currentFile) {
-                displayMessage('No active crop session or file.', 'error');
-                return;
-            }
-            const buttonEl = event.target.closest('.aero-btn');
-            setLoading(buttonEl, true);
-
-            try {
-                const data = cropper.getData(true);
-                const toFormat = document.querySelector('#videoConverterTab .to-format').value || 'mp4';
-                const outputFilename = `output.${toFormat}`;
-                const filter = `crop=${data.width}:${data.height}:${data.x}:${data.y}`;
-                
-                // Use the generic ffmpeg operation function, copying audio to speed up the process
-                await performFFmpegOperation(
-                    ['-i', `input.${currentFile.name.split('.').pop()}`, '-filter:v', filter, '-c:a', 'copy', outputFilename],
-                    outputFilename,
-                    `video/${toFormat}`,
-                    '_cropped'
-                );
-                displayMessage('Video successfully cropped and added to queue.', 'success');
-            } catch (error) {
-                console.error('Visual Video Crop Error:', error);
-                displayMessage(`An error occurred during crop: ${error.message}`, 'error');
-            } finally {
-                setLoading(buttonEl, false);
-                destroyVisualCrop(); // Clean up the cropper UI
-            }
-        }
-
         function destroyVisualCrop() {
             if (!cropper) return;
             cropper.destroy();
@@ -1566,11 +1262,6 @@
             if(activeTab === 'image') {
                 document.getElementById('visualCropBtn').classList.remove('hidden');
                 document.getElementById('cropperActions').classList.add('hidden');
-            } else if (activeTab === 'video') {
-                videoFrameCanvas.classList.add('hidden');
-                videoPreview.classList.remove('hidden');
-                document.getElementById('visualVideoCropBtn').classList.remove('hidden');
-                document.getElementById('videoCropperActions').classList.add('hidden');
             }
         }
 
@@ -1584,14 +1275,6 @@
 
             previewBlob = currentFile;
             appliedTools = [];
-
-            if (activeTab === 'video') {
-                const fields = ['videoCropX', 'videoCropY', 'videoCropWidth', 'videoCropHeight', 'trimStart', 'trimEnd'];
-                fields.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            }
             
             updatePreview(currentFile);
             displayMessage('All edits have been reset.', 'success');
@@ -1624,8 +1307,6 @@
                     const li = document.createElement('li');
                     let icon;
                     if (file.blob.type.startsWith('image/')) icon = 'image';
-                    else if (file.blob.type.startsWith('video/')) icon = 'film';
-                    else if (file.blob.type.startsWith('audio/')) icon = 'music';
                     else icon = 'file-text';
                     
                     li.innerHTML = `
@@ -1690,8 +1371,6 @@
             
             const acceptMap = {
                 image: 'image/*',
-                video: 'video/*',
-                audio: 'audio/*',
                 text: 'text/plain,application/json,text/csv'
             };
             batchFileInput.accept = acceptMap[category] || '*/*';
@@ -1780,16 +1459,6 @@
                     const from = item.file.name.split('.').pop();
                     if (category === 'image') {
                         convertedBlob = await convertImage(item.file, to);
-                    } else if (category === 'video' || category === 'audio') {
-                        if (!ffmpeg.isLoaded()) await ffmpeg.load();
-                        const inputFilename = `input.${from}`;
-                        const outputFilename = `output.${to}`;
-                        ffmpeg.FS('writeFile', inputFilename, await fetchFile(item.file));
-                        await ffmpeg.run('-i', inputFilename, outputFilename);
-                        const data = ffmpeg.FS('readFile', outputFilename);
-                        convertedBlob = new Blob([data.buffer], { type: `${category}/${to}` });
-                        ffmpeg.FS('unlink', inputFilename);
-                        ffmpeg.FS('unlink', outputFilename);
                     } else if (category === 'text') {
                         const content = await item.file.text();
                         const convertedText = convertText(content, from, to);
@@ -1831,7 +1500,6 @@
             displayMessage('ZIP download started.', 'success');
         }
 
-
         // --- Utility and Conversion Functions ---
         function setLoading(button, isLoading) {
             if (!button) return;
@@ -1868,28 +1536,86 @@
             if (from === 'csv' && to === 'txt') return data.replace(/,/g, ' ');
             throw new Error(`Text conversion from ${from} to ${to} is not supported.`);
         }
-        function convertImage(file, toFormat) {
+        
+        async function convertImage(file, toFormat) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = (event) => {
                     const img = new Image();
                     img.src = event.target.result;
-                    img.onload = () => {
+                    img.onload = async () => {
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.width; canvas.height = img.height;
+                        canvas.width = img.width; 
+                        canvas.height = img.height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0);
-                        canvas.toBlob((blob) => {
-                            if (blob) resolve(blob);
-                            else reject(new Error('Canvas to Blob conversion failed.'));
-                        }, `image/${toFormat}`, 0.95);
+
+                        if (toFormat === 'ico') {
+                             try {
+                                const icoBlob = await canvasToIco(canvas);
+                                resolve(icoBlob);
+                            } catch (e) {
+                                reject(e);
+                            }
+                        } else {
+                            canvas.toBlob((blob) => {
+                                if (blob) resolve(blob);
+                                else reject(new Error('Canvas to Blob conversion failed.'));
+                            }, `image/${toFormat}`, 0.95);
+                        }
                     };
                     img.onerror = () => reject(new Error('Failed to load image.'));
                 };
                 reader.onerror = () => reject(new Error('Failed to read file.'));
             });
         }
+        
+        async function canvasToIco(canvas) {
+            return new Promise((resolve, reject) => {
+                // Icons should be small, let's resize to a common size if it's too big.
+                // 256x256 is the max for modern ICOs.
+                const maxSize = 256;
+                let { width, height } = canvas;
+                if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                        height = Math.round(height * (maxSize / width));
+                        width = maxSize;
+                    } else {
+                        width = Math.round(width * (maxSize / height));
+                        height = maxSize;
+                    }
+                }
+                
+                const icoCanvas = document.createElement('canvas');
+                icoCanvas.width = width;
+                icoCanvas.height = height;
+                const ctx = icoCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, width, height);
+
+
+                icoCanvas.toBlob(async (blob) => {
+                    if (!blob) return reject(new Error('Failed to create blob from canvas.'));
+
+                    const pngData = new Uint8Array(await blob.arrayBuffer());
+                    const header = new Uint8Array([0, 0, 1, 0, 1, 0]); // 6 bytes for header
+                    const dir = new DataView(new ArrayBuffer(16)); // 16 bytes for directory entry
+
+                    dir.setUint8(0, width === 256 ? 0 : width); // Width
+                    dir.setUint8(1, height === 256 ? 0 : height); // Height
+                    dir.setUint8(2, 0); // Color Palette
+                    dir.setUint8(3, 0); // Reserved
+                    dir.setUint16(4, 1, true); // Color Planes
+                    dir.setUint16(6, 32, true); // Bits per Pixel
+                    dir.setUint32(8, pngData.length, true); // Image Data Size
+                    dir.setUint32(12, 22, true); // Image Data Offset (6 header + 16 dir = 22)
+
+                    const icoBlob = new Blob([header, new Uint8Array(dir.buffer), pngData], { type: 'image/x-icon' });
+                    resolve(icoBlob);
+                }, 'image/png');
+            });
+        }
+
         function csvToJson(csv) {
             const lines = csv.trim().split('\\n'), headers = lines[0].split(',').map(h => h.trim()), result = [];
             for (let i = 1; i < lines.length; i++) {
