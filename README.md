@@ -39,7 +39,7 @@ SimpleConverter is different. It leverages the power of modern web technologies 
 ## How to Use
 
 1.  Simply open the `index.html` file or use [this page](https://molokrakein.github.io/SimpleConverter/) in a modern web browser like Chrome, Firefox, or Edge.
-2.  Use the top navigation to select a conversion category (Image, Video, etc.).
+2.  Use the top navigation to select a conversion category
 3.  Upload your file(s) using the upload area, or import from a URL.
 4.  Select your desired output format.
 5.  (Optional) Use the available tools to edit your file before conversion.
