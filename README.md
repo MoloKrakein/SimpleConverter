@@ -19,13 +19,9 @@ SimpleConverter is different. It leverages the power of modern web technologies 
 *   **100% Client-Side**: All file processing happens in your browser. Your data stays private and secure.
 *   **Multi-Format Support**:
     *   **Images**: PNG, JPEG, WEBP, BMP, GIF
-    *   **Videos**: MP4, WEBM, MOV, AVI, MKV
-    *   **Audio**: MP3, WAV, OGG, FLAC
     *   **Text**: TXT, CSV, JSON
 *   **Powerful Editing Tools**:
     *   **Image**: Resize, Rotate, Flip, and AI-Powered Background Removal.
-    *   **Video/Audio**: Trim your media files to the exact length you need.
-    *   **Video**: Extract the audio track from a video file.
 *   **Batch Conversion**: Upload multiple files and convert them all to a single format in one go.
 *   **Flexible Input**: Upload files from your computer, drag-and-drop, paste images from your clipboard, or import directly from a URL.
 *   **Unrestricted Downloads**: Download your converted files individually or as a convenient .zip archive instantly. No wait times, no download limits.
