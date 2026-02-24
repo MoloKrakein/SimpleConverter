@@ -1340,6 +1340,40 @@
             await performFFmpegOperation(['-i', `input.${currentFile.name.split('.').pop()}`, '-vn', '-acodec', 'libmp3lame', outputFilename], outputFilename, 'audio/mpeg', '_audio_extracted');
         }
 
+        async function performAudioConversion(from, to) {
+            const normalizedFrom = (from || '').toLowerCase().replace('jpg', 'jpeg');
+            const normalizedTo = (to || '').toLowerCase().replace('jpg', 'jpeg');
+
+            const supportedFormats = ['mp3', 'wav', 'ogg', 'flac', 'm4a'];
+            if (!supportedFormats.includes(normalizedFrom)) {
+                throw new Error(`Unsupported input audio format: ${normalizedFrom}`);
+            }
+
+            const outputMimeMap = {
+                mp3: 'audio/mpeg',
+                wav: 'audio/wav',
+                ogg: 'audio/ogg',
+                flac: 'audio/flac'
+            };
+
+            const codecArgsMap = {
+                mp3: ['-vn', '-codec:a', 'libmp3lame', '-q:a', '2'],
+                wav: ['-vn', '-codec:a', 'pcm_s16le'],
+                ogg: ['-vn', '-codec:a', 'libvorbis', '-q:a', '5'],
+                flac: ['-vn', '-codec:a', 'flac']
+            };
+
+            if (!codecArgsMap[normalizedTo] || !outputMimeMap[normalizedTo]) {
+                throw new Error(`Unsupported output audio format: ${normalizedTo}`);
+            }
+
+            const outputFilename = `output.${normalizedTo}`;
+            const inputFilename = `input.${normalizedFrom}`;
+            const args = ['-i', inputFilename, ...codecArgsMap[normalizedTo], outputFilename];
+
+            await performFFmpegOperation(args, outputFilename, outputMimeMap[normalizedTo], '_converted');
+        }
+
         async function performImageConversion(to) {
             const convertedData = await convertImage(previewBlob, to);
             addFileToDownloadList(convertedData, to, `_converted`);
