@@ -10,6 +10,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- For Markdown Parsing -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -575,7 +577,7 @@
                             <i data-lucide="upload-cloud" class="drop-icon" style="width: 48px; height: 48px;"></i>
                             <p>Drag, drop, or <span style="color: var(--blue-light); font-weight: bold;">paste</span> a file</p>
                             <p id="fileName">No file selected</p>
-                            <input type="file" id="fileInput" class="hidden">
+                            <input type="file" id="fileInput" class="hidden" multiple>
                         </div>
                     </div>
 
@@ -590,8 +592,12 @@
                     <div class="widget">
                         <h2>2. Conversion Options</h2>
                         <div id="imageConverterTab" class="tab-content active">
-                            <div class="form-group"><label for="imageFromFormat">From</label><select id="imageFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
-                            <div class="form-group"><label for="imageToFormat">To</label><select id="imageToFormat" class="form-element to-format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option></select></div>
+                            <div class="form-group"><label for="imageFromFormat">From</label><select id="imageFromFormat" class="form-element from-format"><option value="auto" selected>Auto-detect</option><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option><option value="pdf">PDF</option></select></div>
+                            <div class="form-group"><label for="imageToFormat">To</label><select id="imageToFormat" class="form-element to-format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WEBP</option><option value="bmp">BMP</option><option value="gif">GIF</option><option value="pdf">PDF</option></select></div>
+                            <div id="pdfPageRangeGroup" class="form-group hidden">
+                                <label for="pdfPageRange">PDF Page Range (for PDF → Image)</label>
+                                <input id="pdfPageRange" class="form-element" type="text" placeholder="all or e.g. 1,3,5-8">
+                            </div>
                             <button id="imageConvertBtn" class="aero-btn green">Convert Image</button>
                         </div>
                         <div id="videoConverterTab" class="tab-content">
@@ -868,6 +874,10 @@
             corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
         });
 
+        if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
         // --- DOM Element References ---
         const fileInput = document.getElementById('fileInput'), dropZone = document.getElementById('dropZone'), fullPageDropZone = document.getElementById('fullPageDropZone');
         const fileNameDisplay = document.getElementById('fileName'), messageArea = document.getElementById('messageArea');
@@ -898,6 +908,7 @@
         const batchFileCount = document.getElementById('batchFileCount');
 
         let currentFile = null, activeTab = 'image', convertedFiles = [], batchFiles = [];
+        let multiImageFiles = [];
         let previewBlob = null;
         let appliedTools = [];
         let cropper = null;
@@ -918,7 +929,10 @@
         
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFileSelection(e.target.files);
+            e.target.value = '';
+        });
         imageTabBtn.addEventListener('click', () => switchTab('image'));
         videoTabBtn.addEventListener('click', () => switchTab('video'));
         audioTabBtn.addEventListener('click', () => switchTab('audio'));
@@ -930,6 +944,8 @@
         textConvertBtn.addEventListener('click', (e) => handleConversion('convert', e));
         urlBtn.addEventListener('click', (e) => handleUrlImport(e));
         themeToggleBtn.addEventListener('click', toggleTheme);
+        document.getElementById('imageFromFormat').addEventListener('change', updatePdfPageRangeVisibility);
+        document.getElementById('imageToFormat').addEventListener('change', updatePdfPageRangeVisibility);
         
         downloadAllBtn.addEventListener('click', downloadAllAsZip);
         clearListBtn.addEventListener('click', clearDownloadList);
@@ -989,7 +1005,7 @@
                 if (activeTab === 'batch') {
                     handleBatchUpload(e.dataTransfer.files);
                 } else {
-                    handleFile(e.dataTransfer.files[0]);
+                    handleFileSelection(e.dataTransfer.files);
                 }
             }
         });
@@ -1011,10 +1027,29 @@
             }
             if (fileToHandle) {
                 e.preventDefault();
-                handleFile(fileToHandle);
+                handleFileSelection([fileToHandle]);
                 displayMessage('Image pasted from clipboard.', 'success');
             }
         });
+
+        function handleFileSelection(files) {
+            const selectedFiles = Array.from(files || []).filter(Boolean);
+            if (selectedFiles.length === 0) return;
+
+            const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
+            const hasOnlyImages = imageFiles.length === selectedFiles.length;
+
+            if (activeTab === 'image' && selectedFiles.length > 1 && hasOnlyImages) {
+                multiImageFiles = selectedFiles;
+                handleFile(selectedFiles[0]);
+                fileNameDisplay.textContent = `${selectedFiles.length} images selected`;
+                displayMessage('Multiple images selected. Convert to PDF to create a multi-page file.', 'info');
+                return;
+            }
+
+            multiImageFiles = selectedFiles[0].type.startsWith('image/') ? [selectedFiles[0]] : [];
+            handleFile(selectedFiles[0]);
+        }
 
         function switchTab(tabName) {
             activeTab = tabName;
@@ -1035,7 +1070,24 @@
             }
             
             setupTools(tabName);
+            updatePdfPageRangeVisibility();
             updatePreview(currentFile);
+        }
+
+        function updatePdfPageRangeVisibility() {
+            const groupEl = document.getElementById('pdfPageRangeGroup');
+            const fromEl = document.getElementById('imageFromFormat');
+            const toEl = document.getElementById('imageToFormat');
+            if (!groupEl || !fromEl || !toEl) return;
+
+            const fromFormat = (fromEl.value || '').toLowerCase();
+            const toFormat = (toEl.value || '').toLowerCase();
+            const currentIsPdf = !!currentFile && ((currentFile.type || '').toLowerCase() === 'application/pdf' || currentFile.name.toLowerCase().endsWith('.pdf'));
+            const isPdfInput = fromFormat === 'pdf' || (fromFormat === 'auto' && currentIsPdf);
+            const isImageOutput = ['png', 'jpeg', 'webp', 'bmp', 'gif'].includes(toFormat);
+            const shouldShow = activeTab === 'image' && isPdfInput && isImageOutput;
+
+            groupEl.classList.toggle('hidden', !shouldShow);
         }
 
         function setupTools(tabName) {
@@ -1096,16 +1148,21 @@
             currentFile = file;
             previewBlob = file; 
             appliedTools = []; 
+            if (!file.type.startsWith('image/')) {
+                multiImageFiles = [];
+            } else if (multiImageFiles.length === 0) {
+                multiImageFiles = [file];
+            }
             fileNameDisplay.textContent = file.name;
             
             const fileExt = file.name.split('.').pop().toLowerCase();
-            const imageFormats = ['png', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'];
+            const imageFormats = ['png', 'jpeg', 'jpg', 'webp', 'bmp', 'gif', 'pdf'];
             const videoFormats = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
             const audioFormats = ['mp3', 'wav', 'ogg', 'flac', 'm4a'];
             const textFormats = ['txt', 'csv', 'json'];
 
             let detectedTab = null;
-            if (imageFormats.includes(fileExt)) detectedTab = 'image';
+            if (imageFormats.includes(fileExt) || file.type === 'application/pdf') detectedTab = 'image';
             else if (videoFormats.includes(fileExt)) detectedTab = 'video';
             else if (audioFormats.includes(fileExt)) detectedTab = 'audio';
             else if (textFormats.includes(fileExt)) detectedTab = 'text';
@@ -1113,8 +1170,10 @@
             if (detectedTab && activeTab !== detectedTab) {
                 switchTab(detectedTab);
                 const fromFormatEl = document.querySelector(`#${detectedTab}ConverterTab .from-format`);
-                fromFormatEl.value = fileExt === 'jpg' ? 'jpeg' : fileExt;
+                const normalizedFormat = fileExt === 'jpg' ? 'jpeg' : fileExt;
+                fromFormatEl.value = file.type === 'application/pdf' ? 'pdf' : normalizedFormat;
             }
+            updatePdfPageRangeVisibility();
             updatePreview(file);
         }
         
@@ -1369,9 +1428,35 @@
         }
 
         async function performImageConversion(to) {
-            const convertedData = await convertImage(previewBlob, to);
-            addFileToDownloadList(convertedData, to, `_converted`);
-            displayMessage(`File added to queue.`, 'success');
+            const targetFormat = (to || '').toLowerCase();
+            const sourceType = (previewBlob?.type || currentFile?.type || '').toLowerCase();
+            const isPdfSource = sourceType === 'application/pdf' || currentFile.name.toLowerCase().endsWith('.pdf');
+
+            if (targetFormat === 'pdf') {
+                if (!sourceType.startsWith('image/')) {
+                    throw new Error('Image to PDF conversion requires an image source file.');
+                }
+
+                const sources = multiImageFiles.length > 1 ? multiImageFiles : [previewBlob];
+                const convertedPdf = await convertImagesToPdf(sources);
+                addFileToDownloadList(convertedPdf, 'pdf', `_converted`);
+                displayMessage(`File added to queue.`, 'success');
+                return;
+            }
+
+            if (isPdfSource) {
+                const pageRangeInput = document.getElementById('pdfPageRange').value;
+                const convertedPages = await convertPdfToImages(previewBlob, targetFormat, pageRangeInput);
+                convertedPages.forEach((pageResult) => {
+                    addFileToDownloadList(pageResult.blob, targetFormat, `_page_${pageResult.pageNumber}_converted`);
+                });
+                displayMessage(`${convertedPages.length} page(s) added to queue.`, 'success');
+                return;
+            } else {
+                const convertedData = await convertImage(previewBlob, targetFormat);
+                addFileToDownloadList(convertedData, to, `_converted`);
+                displayMessage(`File added to queue.`, 'success');
+            }
         }
 
         async function performTextConversion(from, to) {
@@ -1928,6 +2013,155 @@
                 };
                 reader.onerror = () => reject(new Error('Failed to read file.'));
             });
+        }
+
+        function blobToDataUrl(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Failed to read blob.'));
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function convertImagesToPdf(sourceBlobs) {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('PDF converter library failed to load.');
+            }
+
+            const { jsPDF } = window.jspdf;
+            const sources = Array.from(sourceBlobs || []).filter(Boolean);
+            if (sources.length === 0) {
+                throw new Error('No images selected for PDF conversion.');
+            }
+
+            let pdf = null;
+
+            for (let index = 0; index < sources.length; index++) {
+                const sourceBlob = sources[index];
+                const imageDataUrl = await blobToDataUrl(sourceBlob);
+                const image = new Image();
+
+                await new Promise((resolve, reject) => {
+                    image.onload = resolve;
+                    image.onerror = () => reject(new Error('Failed to load image for PDF conversion.'));
+                    image.src = imageDataUrl;
+                });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0);
+
+                const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                const orientation = canvas.width >= canvas.height ? 'landscape' : 'portrait';
+
+                if (!pdf) {
+                    pdf = new jsPDF({
+                        orientation,
+                        unit: 'pt',
+                        format: [canvas.width, canvas.height]
+                    });
+                } else {
+                    pdf.addPage([canvas.width, canvas.height], orientation);
+                }
+
+                pdf.addImage(jpgDataUrl, 'JPEG', 0, 0, canvas.width, canvas.height);
+            }
+
+            if (!pdf) {
+                throw new Error('Failed to generate PDF.');
+            }
+
+            return pdf.output('blob');
+        }
+
+        function parsePdfPageRange(pageRange, maxPages) {
+            const normalizedRange = (pageRange || '').trim().toLowerCase();
+            if (!normalizedRange || normalizedRange === 'all') {
+                return Array.from({ length: maxPages }, (_, index) => index + 1);
+            }
+
+            const selectedPages = new Set();
+            const tokens = normalizedRange.split(',').map(token => token.trim()).filter(Boolean);
+
+            if (tokens.length === 0) {
+                throw new Error('Invalid page range. Use all, 3, or 2-5,8.');
+            }
+
+            for (const token of tokens) {
+                if (token.includes('-')) {
+                    const [startText, endText] = token.split('-').map(part => part.trim());
+                    const start = parseInt(startText, 10);
+                    const end = parseInt(endText, 10);
+
+                    if (!Number.isInteger(start) || !Number.isInteger(end) || start <= 0 || end <= 0 || start > end) {
+                        throw new Error(`Invalid page range segment: ${token}`);
+                    }
+
+                    for (let page = start; page <= end; page++) {
+                        if (page > maxPages) {
+                            throw new Error(`Page ${page} is out of range. This PDF has ${maxPages} page(s).`);
+                        }
+                        selectedPages.add(page);
+                    }
+                } else {
+                    const page = parseInt(token, 10);
+                    if (!Number.isInteger(page) || page <= 0) {
+                        throw new Error(`Invalid page number: ${token}`);
+                    }
+                    if (page > maxPages) {
+                        throw new Error(`Page ${page} is out of range. This PDF has ${maxPages} page(s).`);
+                    }
+                    selectedPages.add(page);
+                }
+            }
+
+            return Array.from(selectedPages).sort((a, b) => a - b);
+        }
+
+        async function convertPdfToImages(sourceBlob, toFormat, pageRange = 'all') {
+            if (!window.pdfjsLib) {
+                throw new Error('PDF reader library failed to load.');
+            }
+
+            const outputFormat = (toFormat || '').toLowerCase();
+            if (!['png', 'jpeg', 'webp', 'bmp', 'gif'].includes(outputFormat)) {
+                throw new Error(`PDF to ${toFormat} is not supported.`);
+            }
+
+            const pdfData = new Uint8Array(await sourceBlob.arrayBuffer());
+            const loadingTask = window.pdfjsLib.getDocument({ data: pdfData });
+            const pdf = await loadingTask.promise;
+            const pagesToConvert = parsePdfPageRange(pageRange, pdf.numPages);
+            const mimeType = outputFormat === 'jpeg' ? 'image/jpeg' : `image/${outputFormat}`;
+            const pageResults = [];
+
+            for (const pageNumber of pagesToConvert) {
+                const page = await pdf.getPage(pageNumber);
+                const viewport = page.getViewport({ scale: 2 });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const context = canvas.getContext('2d');
+
+                await page.render({ canvasContext: context, viewport }).promise;
+
+                const blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob((pageBlob) => {
+                        if (pageBlob) resolve(pageBlob);
+                        else reject(new Error(`PDF page ${pageNumber} rendering failed.`));
+                    }, mimeType, 0.95);
+                });
+
+                pageResults.push({ pageNumber, blob });
+            }
+
+            return pageResults;
         }
         function csvToJson(csv) {
             const lines = csv.trim().split('\\n'), headers = lines[0].split(',').map(h => h.trim()), result = [];
