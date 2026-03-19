@@ -927,6 +927,14 @@
             flac: { mime: 'audio/flac', ffmpegArgs: ['-vn', '-c:a', 'flac'] }
         };
         
+        const videoFormatConfig = {
+            mp4: { mime: 'video/mp4', ffmpegArgs: ['-c:v', 'libx264', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k'] },
+            webm: { mime: 'video/webm', ffmpegArgs: ['-c:v', 'libvpx-vp9', '-crf', '32', '-c:a', 'libopus', '-b:a', '128k'] },
+            mov: { mime: 'video/quicktime', ffmpegArgs: ['-c:v', 'libx264', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k'] },
+            avi: { mime: 'video/x-msvideo', ffmpegArgs: ['-c:v', 'mpeg4', '-q:v', '5', '-c:a', 'libmp3lame', '-b:a', '128k'] },
+            mkv: { mime: 'video/x-matroska', ffmpegArgs: ['-c:v', 'libx264', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k'] }
+        };
+        
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
@@ -1407,6 +1415,13 @@
             if (!config) throw new Error(`Audio format ${format} is not supported.`);
             return config;
         }
+        
+        function getVideoConfig(format) {
+            const normalizedFormat = (format || '').toLowerCase();
+            const config = videoFormatConfig[normalizedFormat];
+            if (!config) throw new Error(`Video format ${format} is not supported.`);
+            return config;
+        }
 
         async function performAudioConversion(from, to) {
             const toFormat = (to || '').toLowerCase();
@@ -1418,6 +1433,20 @@
                 ['-i', `input.${inputExt}`, ...audioConfig.ffmpegArgs, outputFilename],
                 outputFilename,
                 audioConfig.mime,
+                '_converted'
+            );
+        }
+        
+        async function performVideoConversion(from, to) {
+            const toFormat = (to || '').toLowerCase();
+            const videoConfig = getVideoConfig(toFormat);
+            const inputExt = currentFile.name.split('.').pop().toLowerCase();
+            const outputFilename = `output.${toFormat}`;
+
+            await performFFmpegOperation(
+                ['-i', `input.${inputExt}`, ...videoConfig.ffmpegArgs, outputFilename],
+                outputFilename,
+                videoConfig.mime,
                 '_converted'
             );
         }
